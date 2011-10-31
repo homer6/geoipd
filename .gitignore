@@ -11,3 +11,12 @@ src/libfrequent-cron.a
 tests/CMakeFiles/
 tests/Makefile
 tests/cmake_install.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+lib/mysql/cppconn/config.h
+lib/mysql/driver/libmysqlcppconn.so
+lib/mysql/driver/libmysqlcppconn.so.5
+lib/mysql/driver/libmysqlcppconn.so.5.1.1.0
+lib/mysql/driver/nativeapi/binding_config.h
+src/import-geoip-data.dir/
+import-geoip-data

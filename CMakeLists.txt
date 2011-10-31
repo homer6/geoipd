@@ -5,8 +5,11 @@ project(${MAIN_EXECUTABLE} CXX C)
 add_subdirectory(src)
 
 
+set( MYSQL_CMAKE_SOURCE_DIR ${CMAKE_SOURCE_DIR}/lib/mysql )
+add_subdirectory( lib/mysql EXCLUDE_FROM_ALL )
 
-#add_subdirectory(tests EXCLUDE_FROM_ALL)
+
+
 #set(PROJECT_TESTS ${CMAKE_PROJECT_NAME}_tests)
 #enable_testing()
 #add_test(tests/${PROJECT_TESTS} tests/${PROJECT_TESTS})
