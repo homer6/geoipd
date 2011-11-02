@@ -56,34 +56,27 @@ int main( int argc, char** argv ){
         }
 
 
-    cout << blocks_filename << endl;
-    cout << location_filename << endl;
+    //write blocks file to database
+        cout << blocks_filename << "... ";
 
+        string line;
+        ifstream blocks_file( blocks_filename.c_str() );
 
-    string line;
+        const boost::regex blocks_pattern("\"(\\d+)\",\"(\\d+)\",\"(\\d+)\"");
+        boost::cmatch result;
 
-    ifstream blocks_file( blocks_filename.c_str() );
-
-    const boost::regex expression("\"(\\d+)\",\"(\\d+)\",\"(\\d+)\"");
-    boost::cmatch result;
-    //char *line_string;
-//    size_t string_length;
-
-    int x = 0;
-
-    while( x < 5 ){
-        x++;
-        getline( blocks_file, line );
-        //line_string = (char *) malloc( strlen(line.c_str()) + 1 );
-        //line_string = strcpy( line_string, line.c_str() );
-        if( boost::regex_match(line.c_str(), result, expression) ){
-            cout << result[1] << " " << std::atoi( result[1].str().c_str() ) << endl;
+        int x = 0;
+        while( 1  ){
+            x++;
+            getline( blocks_file, line );
+            if( boost::regex_match(line.c_str(), result, blocks_pattern) ){
+                cout << result[1] << " " << std::atoi( result[1].str().c_str() ) << endl;
+            }
+            if( x > 100 ) break;
         }
-        //free( line_string );
-    }
+        blocks_file.close();
 
-    blocks_file.close();
-
+        cout << "[done]" << endl << x << " lines.";
 
     return 0;
 
