@@ -5,7 +5,7 @@
 namespace Altumo{
 
     pthread_mutex_t number_of_workers_mutex = PTHREAD_MUTEX_INITIALIZER;
-    static int number_of_workers = 0;
+    int number_of_workers = 0;
 
     Connector::Connector()
         : connected(false)
@@ -35,20 +35,30 @@ namespace Altumo{
                 sql::Driver * driver = sql::mysql::get_driver_instance();
 
                 //use the driver to get a connection
-                std::auto_ptr< sql::Connection > connection( driver->connect(url, username, password) );
+                std::auto_ptr< sql::Connection > tmp_connection( driver->connect(url, username, password) );
 
                 /* Creating a "simple" statement - "simple" = not a prepared statement */
-                std::auto_ptr< sql::Statement > tmp_statement( connection->createStatement() );
+                std::auto_ptr< sql::Statement > tmp_statement( tmp_connection->createStatement() );
 
                 //select the current database
                 tmp_statement->execute( "USE " + database );
 
                 statement = tmp_statement;
-                connected = true;                
+                connection = tmp_connection;
+                connected = true;
 
         }
 
     }
+
+
+    void Connector::disconnect(){
+
+        connection->close();
+        this->connected = false;
+
+    }
+
 
 
 
@@ -100,21 +110,28 @@ namespace Altumo{
     * Runs and SQL query and returns the result.
     *
     */
-    void Connector::executeStatement( const string statement_str, bool asynchronous ){
+    void Connector::executeStatement( const string &statement_str, bool asynchronous ){
 
 
         if( asynchronous ){
 
-            while( number_of_workers > 10 ){
+            while( number_of_workers >= 100 ){
 
             }
 
             string *statement_string = new string( statement_str );
 
             pthread_t thread;
+            pthread_mutex_lock( &number_of_workers_mutex );
+                number_of_workers++;
+            pthread_mutex_unlock( &number_of_workers_mutex );
             int error = pthread_create( &thread, NULL, executeStatementThread, (void *) statement_string );
 
             if( error != 0 ){
+
+                pthread_mutex_lock( &number_of_workers_mutex );
+                    number_of_workers--;
+                pthread_mutex_unlock( &number_of_workers_mutex );
 
                 //error (switch to synchronous)
                     delete statement_string;
@@ -125,7 +142,8 @@ namespace Altumo{
 
             }else{
 
-                this->statement_threads.push_back( &thread );
+                //pthread_join( thread, NULL );
+                //this->statement_threads.push_back( &thread );
 
             }
 
@@ -143,6 +161,7 @@ namespace Altumo{
 
     void Connector::waitForConnectionsToClose(){
 
+        /*
         vector< pthread_t* >::iterator iterator;
 
         for(
@@ -151,15 +170,16 @@ namespace Altumo{
             iterator++
         ){
             pthread_join( **iterator, NULL );
-        }
+        }*/
 
     }
 
 
     Connector::~Connector(){
 
-        this->waitForConnectionsToClose();
-        connected = false;
+        //this->waitForConnectionsToClose();
+        //connected = false;
+        this->disconnect();
 
     }
 
@@ -175,6 +195,14 @@ namespace Altumo{
 
     }
 
+
+
+
+    int Connector::getNumberOfActiveConnections() const{
+
+        return number_of_workers;
+
+    }
 
 
 
@@ -203,18 +231,23 @@ namespace Altumo{
         string *statement_str = ((string *) arg);
 
         pthread_mutex_lock( &number_of_workers_mutex );
-            number_of_workers++;
+            //number_of_workers++;
             cout << endl << "Running thread " << pthread_self() << ". Workers: " << number_of_workers << ". Statement size: " << statement_str->length() << endl;
             sql::Driver *driver = sql::mysql::get_driver_instance();
             driver->threadInit();
-            Connector *connector = new Connector();
         pthread_mutex_unlock( &number_of_workers_mutex );
 
-            connector->executeStatement( *statement_str, false );
+
+                Connector *connector = new Connector();
+
+                //sleep( 3 );
+
+                connector->executeStatement( *statement_str, false );
+
+
 
         pthread_mutex_lock( &number_of_workers_mutex );
             driver->threadEnd();
-
             delete statement_str;
             delete connector;
             //delete driver;

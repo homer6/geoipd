@@ -32,15 +32,18 @@ namespace Altumo{
             ~Connector();
             void test();
             ResultSet executeQuery( const string query );
-            void executeStatement( const string statement_str, bool asynchronous = true );
+            void executeStatement( const string &statement_str, bool asynchronous = true );
             void connect();
+            void disconnect();
             void waitForConnectionsToClose();
             bool hasOpenConnections();
+            int getNumberOfActiveConnections() const;
 
         protected:            
             bool connected;
             std::auto_ptr< sql::Statement > statement;
-            std::vector< pthread_t* > statement_threads;
+            std::auto_ptr< sql::Connection > connection;
+            //std::vector< pthread_t* > statement_threads;
 
     };
 

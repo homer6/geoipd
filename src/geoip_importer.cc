@@ -113,82 +113,20 @@ namespace Altumo{
                         "INDEX `area_code_index` ( `area_code` )"
                 ") ENGINE=MyISAM"
             ;
-            this->connector->executeStatement( current_query );
+            this->connector->executeStatement( current_query, false );
 
 
 
             current_query =
                 "CREATE TABLE `geo_ip_block`("
-                        "`start_ip` MEDIUMINT UNSIGNED NOT NULL,"
-                        "`end_ip` MEDIUMINT UNSIGNED NOT NULL,"
+                        "`start_ip` INTEGER UNSIGNED NOT NULL,"
+                        "`end_ip` INTEGER UNSIGNED NOT NULL,"
                         "`location_id` INTEGER UNSIGNED NOT NULL,"
                         "INDEX `ip_range_index` ( `start_ip`, `end_ip` ),"
                         "INDEX `location_index` ( `location_id` )"
                 ") ENGINE=MyISAM"
             ;
-            this->connector->executeStatement( current_query );
-
-    }
-
-
-    /**
-    * Imports the GeoIPCity-134-Blocks.csv file, provided by MaxMind,
-    * to a table called "geo_ip_block".
-    *
-    */
-    void GeoipImporter::importBlocksFile(){
-
-        //declare and initialize local variables
-            string insert_query, blocks_insert_query;
-            bool first = true;
-            int x = 0;
-            boost::cmatch result;
-            string line;
-
-        //import the blocks section
-            ifstream blocks_file( this->blocks_filename.c_str() );
-            const boost::regex blocks_pattern( "\"(\\d+)\",\"(\\d+)\",\"(\\d+)\"" );
-            x = 0;
-            first = true;
-            blocks_insert_query = "INSERT INTO geo_ip_block( start_ip, end_ip, location_id ) VALUES ";
-            insert_query = blocks_insert_query;
-
-            while( !blocks_file.eof() ){
-
-                getline( blocks_file, line );
-                if( boost::regex_match(line.c_str(), result, blocks_pattern) ){
-                    x++;
-                    if( !first ){
-                        insert_query += ",";
-                    }else{
-                        first = false;
-                    }
-                    insert_query += " (" +
-                                  escapeString( result[1].str().c_str() ) +
-                                ", " +
-                                  escapeString( result[2].str().c_str() ) +
-                                ", " +
-                                  escapeString( result[3].str().c_str() ) +
-                                ")";
-
-                    if( x % 100000 == 0 ){
-                        this->connector->executeStatement( insert_query );
-                        insert_query = blocks_insert_query;
-                        first = true;
-                        cout << ".";
-                        flush( cout );
-                    }
-                }
-
-            }
-            this->connector->executeStatement( insert_query );
-            insert_query = "";
-            first = true;
-            cout << ".";
-            flush( cout );
-            cout << endl << x << " block records imported." << endl;
-            blocks_file.close();
-
+            this->connector->executeStatement( current_query, false );
 
     }
 
@@ -206,6 +144,7 @@ namespace Altumo{
             int x = 0;
             boost::cmatch result;
             string line;
+            const size_t batch_size = 500;
 
         //import the locations section
             ifstream locations_file( this->locations_filename.c_str() );
@@ -246,7 +185,7 @@ namespace Altumo{
                                   escapeString( result[9].str().c_str() ) +
                                 ")";
 
-                    if( x % 10000 == 0 ){
+                    if( x % batch_size == 0 ){
                         this->connector->executeStatement( insert_query );
                         insert_query = locations_insert_query;
                         first = true;
@@ -257,7 +196,9 @@ namespace Altumo{
 
             }
 
-            this->connector->executeStatement( insert_query );
+            if( x % batch_size != 0 ){
+                this->connector->executeStatement( insert_query );
+            }
             insert_query = "";
             first = true;
             cout << ".";
@@ -266,6 +207,80 @@ namespace Altumo{
             locations_file.close();
 
     }
+
+
+
+    /**
+    * Imports the GeoIPCity-134-Blocks.csv file, provided by MaxMind,
+    * to a table called "geo_ip_block".
+    *
+    */
+    void GeoipImporter::importBlocksFile(){
+
+        //declare and initialize local variables
+            string insert_query, blocks_insert_query;
+            bool first = true;
+            int x = 0;
+            boost::cmatch result;
+            string line;
+            const size_t batch_size = 500;
+
+        //import the blocks section
+            ifstream blocks_file( this->blocks_filename.c_str() );
+            const boost::regex blocks_pattern( "\"(\\d+)\",\"(\\d+)\",\"(\\d+)\"" );
+            blocks_insert_query = "INSERT INTO geo_ip_block( start_ip, end_ip, location_id ) VALUES ";
+            insert_query = blocks_insert_query;
+
+            while( getline(blocks_file, line, '\n') ){
+
+                //if( boost::regex_match(line.c_str(), result, blocks_pattern) ){
+                    x++;
+
+                    /*
+                    if( !first ){
+                        insert_query += ",";
+                    }else{
+                        first = false;
+                    }
+                    insert_query += " (" +
+                                  escapeString( result[1].str().c_str() ) +
+                                ", " +
+                                  escapeString( result[2].str().c_str() ) +
+                                ", " +
+                                  escapeString( result[3].str().c_str() ) +
+                                ")";
+
+                    if( x % batch_size == 0 ){
+                        this->connector->executeStatement( insert_query );
+                        insert_query = blocks_insert_query;
+                        first = true;
+                        cout << ". " << x;
+                        flush( cout );
+                    }*/
+
+                //}
+
+                if( x > 2000000 ){
+                    break;
+                }
+
+            }
+
+            if( x % batch_size != 0 ){
+                this->connector->executeStatement( insert_query );
+            }
+
+            insert_query = "";
+            first = true;
+            cout << ".";
+            flush( cout );
+            cout << endl << x << " block records imported." << endl;
+            blocks_file.close();
+
+
+    }
+
+
 
 
     bool GeoipImporter::readyToClose(){
