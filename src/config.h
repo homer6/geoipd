@@ -4,10 +4,10 @@
 
 
     // Connection properties
-        #define MYSQL_DATABASE "my_database"
+        #define MYSQL_DATABASE "test"
         #define MYSQL_HOSTNAME "tcp://127.0.0.1:3306"
-        #define MYSQL_USERNAME "my_user"
-        #define MYSQL_PASSWORD "testing123"
+        #define MYSQL_USERNAME "root"
+        #define MYSQL_PASSWORD ""
 
 
 #endif

@@ -45,6 +45,7 @@ int main( int argc, char** argv ){
             location_filename = variables_map["locations-file"].as<string>();
         }else{
             cout << "The locations file is required.\n";
+            cout << desc << "\n";
             return 1;
         }
 
@@ -52,38 +53,124 @@ int main( int argc, char** argv ){
             blocks_filename = variables_map["blocks-file"].as<string>();
         }else{
             cout << "The blocks file is required.\n";
+            cout << desc << "\n";
             return 1;
         }
 
-
-    //write blocks file to database
-        cout << blocks_filename << "... ";
-
-        string line;
-        ifstream blocks_file( blocks_filename.c_str() );
-
-        const boost::regex blocks_pattern("\"(\\d+)\",\"(\\d+)\",\"(\\d+)\"");
-        boost::cmatch result;
-
+    //declare variables used in both files
+        string insert_query, blocks_insert_query, locations_insert_query;
+        bool first = true;
         int x = 0;
-        while( 1  ){
-            x++;
+        boost::cmatch result;
+        string line;
+        Connector *connector = new Connector();
+
+    //import the locations section
+        ifstream locations_file( location_filename.c_str() );
+        const boost::regex locations_pattern( "(\\d+),\"(..)\",\"(..)\",\"(.*?)\",\"(.*?)\",(.*?),(.*?),(\\d+),(\\d+)" );
+        x = 0;
+        first = true;
+        locations_insert_query = "INSERT INTO geo_ip_location( id, country, region, city, postal_code, latitude, longitude, metro_code, area_code ) VALUES ";
+        insert_query = locations_insert_query;
+
+        while( !locations_file.eof() ){
+
+            getline( locations_file, line );
+            if( boost::regex_match(line.c_str(), result, locations_pattern) ){
+
+                x++;
+                if( !first ){
+                    insert_query += ",";
+                }else{
+                    first = false;
+                }
+                insert_query += " (" +
+                              escapeString( result[1].str().c_str() ) +
+                            ", \"" +
+                              escapeString( result[2].str().c_str() ) +
+                            "\", \"" +
+                              escapeString( result[3].str().c_str() ) +
+                            "\", \"" +
+                              escapeString( result[4].str().c_str() ) +
+                            "\", \"" +
+                              escapeString( result[5].str().c_str() ) +
+                            "\", " +
+                              escapeString( result[6].str().c_str() ) +
+                            ", " +
+                              escapeString( result[7].str().c_str() ) +
+                            ", " +
+                              escapeString( result[8].str().c_str() ) +
+                            ", " +
+                              escapeString( result[9].str().c_str() ) +
+                            ")";
+
+                if( x % 10000 == 0 ){
+                    connector->executeStatement( insert_query );
+                    insert_query = locations_insert_query;
+                    first = true;
+                    cout << ".";
+                    flush( cout );
+                }
+            }
+
+        }
+        connector->executeStatement( insert_query );
+        insert_query = "";
+        first = true;
+        cout << ".";
+        flush( cout );
+        cout << endl << x << " locations records imported." << endl;
+        locations_file.close();
+
+
+    //import the blocks section
+        ifstream blocks_file( blocks_filename.c_str() );
+        const boost::regex blocks_pattern( "\"(\\d+)\",\"(\\d+)\",\"(\\d+)\"" );
+        x = 0;
+        first = true;
+        blocks_insert_query = "INSERT INTO geo_ip_block( start_ip, end_ip, location_id ) VALUES ";
+        insert_query = blocks_insert_query;
+
+        while( !blocks_file.eof() ){
+
             getline( blocks_file, line );
             if( boost::regex_match(line.c_str(), result, blocks_pattern) ){
-                cout << result[1] << " " << std::atoi( result[1].str().c_str() ) << endl;
+                x++;
+                if( !first ){
+                    insert_query += ",";
+                }else{
+                    first = false;
+                }
+                insert_query += " (" +
+                              escapeString( result[1].str().c_str() ) +
+                            ", " +
+                              escapeString( result[2].str().c_str() ) +
+                            ", " +
+                              escapeString( result[3].str().c_str() ) +
+                            ")";
+
+                if( x % 10000 == 0 ){
+                    connector->executeStatement( insert_query );
+                    insert_query = blocks_insert_query;
+                    first = true;
+                    cout << ".";
+                    flush( cout );
+                }
             }
-            if( x > 100 ) break;
+
         }
+        connector->executeStatement( insert_query );
+        insert_query = "";
+        first = true;
+        cout << ".";
+        flush( cout );
+        cout << endl << x << " block records imported." << endl;
         blocks_file.close();
 
-        cout << "[done]" << endl << x << " lines.";
+
+    delete connector;
 
     return 0;
-
-    Connector connector;
-
-    connector.test();
-
 
 
 }
