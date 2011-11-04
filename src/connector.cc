@@ -115,7 +115,7 @@ namespace Altumo{
 
         if( asynchronous ){
 
-            while( number_of_workers >= 100 ){
+            while( number_of_workers >= 140 ){
 
             }
 
@@ -231,8 +231,6 @@ namespace Altumo{
         string *statement_str = ((string *) arg);
 
         pthread_mutex_lock( &number_of_workers_mutex );
-            //number_of_workers++;
-            //cout << endl << "Running thread " << pthread_self() << ". Workers: " << number_of_workers << ". Statement size: " << statement_str->length() << endl;
             sql::Driver *driver = sql::mysql::get_driver_instance();
             driver->threadInit();
         pthread_mutex_unlock( &number_of_workers_mutex );
@@ -248,13 +246,12 @@ namespace Altumo{
 
         pthread_mutex_lock( &number_of_workers_mutex );
             driver->threadEnd();
-            delete statement_str;
-            delete connector;
-            //delete driver;
-
             number_of_workers--;
-
         pthread_mutex_unlock( &number_of_workers_mutex );
+
+        delete statement_str;
+        delete connector;
+        //delete driver;
 
         return NULL;
 
