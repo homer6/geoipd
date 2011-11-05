@@ -5,9 +5,7 @@ add_executable( ../${CMAKE_PROJECT_NAME} ${sources} )
 
 find_package( Boost 1.37 COMPONENTS system program_options regex REQUIRED )
 include_directories( ${Boost_INCLUDE_DIR} )
-target_link_libraries( ../${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} mysqlcppconn )
-
-include_directories( ../lib ../lib/mysql )
+target_link_libraries( ../${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES} )
 
 # Set default compile flags for GCC
 if(CMAKE_COMPILER_IS_GNUCXX)

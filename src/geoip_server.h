@@ -15,6 +15,7 @@
     #include <boost/program_options.hpp>
     #include <boost/regex.hpp>
 
+    #include "location.h"
 
     using namespace std;
 

@@ -98,7 +98,8 @@ namespace Altumo{
         //import the locations section
             ifstream locations_file( this->locations_filename.c_str() );
             const boost::regex locations_pattern( "(\\d+),\"(..)\",\"(..)\",\"(.*?)\",\"(.*?)\",(.*?),(.*?),(\\d*),(\\d*)" );
-            number_of_imported_records = 0;
+            int number_of_imported_records = 0;
+            int number_of_skipped_records = 0;
 
             while( !locations_file.eof() ){
 

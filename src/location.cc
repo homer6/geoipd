@@ -13,8 +13,6 @@ namespace Altumo{
 
     Location::~Location(){
 
-        this->disconnect();
-
     }
 
 

@@ -2,7 +2,6 @@
 #define LOCATION_H
 
     //required to connect
-        #include "config.h"
         #include <iostream>
         #include <string>
 
