@@ -5,7 +5,6 @@ using namespace std;
 
 namespace Altumo{
 
-
     /**
     * Contructor. Creates the database connection.
     *
@@ -81,8 +80,8 @@ namespace Altumo{
 
         //drop the existing tables
 
-        this->connector->executeStatement( "DROP TABLE IF EXISTS `geo_ip_location`" );
-        this->connector->executeStatement( "DROP TABLE IF EXISTS `geo_ip_block`" );
+        this->connector->executeStatement( "DROP TABLE IF EXISTS `geo_ip_location`", false );
+        this->connector->executeStatement( "DROP TABLE IF EXISTS `geo_ip_block`", false );
 
     }
 
@@ -267,5 +266,17 @@ namespace Altumo{
             locations_file.close();
 
     }
+
+
+    bool GeoipImporter::readyToClose(){
+
+        if( this->connector->hasOpenConnections() ){
+            return false;
+        }else{
+            return true;
+        }
+
+    }
+
 
 }

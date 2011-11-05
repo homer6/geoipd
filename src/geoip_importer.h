@@ -30,6 +30,7 @@
                 void createNewTables();
                 void importBlocksFile();
                 void importLocationsFile();
+                bool readyToClose();
 
             protected:
                 string blocks_filename;

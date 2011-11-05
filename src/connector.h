@@ -6,6 +6,8 @@
         #include <iostream>
         #include <string>
         #include "mysql/driver/mysql_public_iface.h"
+        #include <pthread.h>
+        #include <vector>
 
     //required by Test
         #include <stdlib.h>
@@ -21,6 +23,8 @@ namespace Altumo{
 
     typedef std::auto_ptr< sql::ResultSet > ResultSet;
 
+    class Connector;
+
     class Connector{
 
         public:
@@ -28,16 +32,21 @@ namespace Altumo{
             ~Connector();
             void test();
             ResultSet executeQuery( const string query );
-            void executeStatement( const string statement_str );
+            void executeStatement( const string statement_str, bool asynchronous = true );
             void connect();
+            void waitForConnectionsToClose();
+            bool hasOpenConnections();
 
         protected:            
             bool connected;
             std::auto_ptr< sql::Statement > statement;
+            std::vector< pthread_t* > statement_threads;
 
     };
 
     string escapeString( const char *pStr );
+    void *executeStatementThread( void *arg );
+
 
 }
 
