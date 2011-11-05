@@ -55,10 +55,13 @@ int main( int argc, char** argv ){
     importer->clearExistingTables();
     importer->createNewTables();
     importer->importLocationsFile();
-    importer->importBlocksFile();
-
     while( !importer->readyToClose() ){
-        sleep( 1 );
+        usleep( 300000 );
+    }
+
+    importer->importBlocksFile();
+    while( !importer->readyToClose() ){
+        usleep( 300000 );
     }
 
 

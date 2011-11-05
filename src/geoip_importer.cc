@@ -171,7 +171,7 @@ namespace Altumo{
                                   escapeString( result[3].str().c_str() ) +
                                 ")";
 
-                    if( x % 10000 == 0 ){
+                    if( x % 100000 == 0 ){
                         this->connector->executeStatement( insert_query );
                         insert_query = blocks_insert_query;
                         first = true;
