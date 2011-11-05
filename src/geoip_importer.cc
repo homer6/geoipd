@@ -11,7 +11,9 @@ namespace Altumo{
     */
     GeoipImporter::GeoipImporter(){
 
-        this->connector = new Connector();
+        //setup default values
+            this->connector = new Connector();
+            this->mysql_max_packet_size = this->connector->readMaxPacketSize() * 0.30;
 
     }
 
@@ -145,7 +147,6 @@ namespace Altumo{
             int number_of_skipped_records = 0;
             boost::cmatch result;
             string line;
-            const size_t batch_size = 500;
             string metro_code;
             string area_code;
 
@@ -200,7 +201,7 @@ namespace Altumo{
                                   area_code +
                                 ")";
 
-                    if( number_of_imported_records % batch_size == 0 ){
+                    if( insert_query.length() > this->mysql_max_packet_size ){
                         this->connector->executeStatement( insert_query );
                         insert_query = locations_insert_query;
                         first = true;
@@ -213,12 +214,12 @@ namespace Altumo{
 
             }
 
-            if( number_of_imported_records % batch_size != 0 ){
+            if( !first ){
                 this->connector->executeStatement( insert_query );
             }
 
             first = true;
-            cout << endl << number_of_imported_records << " locations records imported." << endl;
+            cout << endl << number_of_imported_records << " locations records imported.";
             cout << endl << number_of_skipped_records << " locations records skipped." << endl;
             flush( cout );
             locations_file.close();
@@ -241,7 +242,6 @@ namespace Altumo{
             int number_of_skipped_records = 0;
             boost::cmatch result;
             string line;
-            const size_t batch_size = 5000;
 
         //import the blocks section
             ifstream blocks_file( this->blocks_filename.c_str() );
@@ -270,7 +270,7 @@ namespace Altumo{
                                   escapeString( result[3].str().c_str() ) +
                                 ")";
 
-                    if( number_of_imported_records % batch_size == 0 ){
+                    if( insert_query.length() > this->mysql_max_packet_size ){
                         this->connector->executeStatement( insert_query );
                         insert_query = blocks_insert_query;
                         first = true;
@@ -284,12 +284,12 @@ namespace Altumo{
 
             }
 
-            if( number_of_imported_records % batch_size != 0 ){
+            if( !first ){
                 this->connector->executeStatement( insert_query );
             }
 
             first = true;
-            cout << endl << number_of_imported_records << " block records imported." << endl;
+            cout << endl << number_of_imported_records << " block records imported.";
             cout << endl << number_of_skipped_records << " block records skipped." << endl;
             flush( cout );
             blocks_file.close();

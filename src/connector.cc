@@ -10,7 +10,6 @@ namespace Altumo{
     Connector::Connector()
         : connected(false)
     {
-        //statement_threads = vector< pthread_t* >();
 
     }
 
@@ -60,31 +59,22 @@ namespace Altumo{
     }
 
 
-
-
     /**
-    * Selects a number of rows and outputs to stdout.
+    * Reads the max_allowed_packet variable from the remote server.
     *
     */
-    void Connector::test(){
+    unsigned long Connector::readMaxPacketSize(){
 
-        connect();
+        //read the max packet size from remote server
+            ResultSet result_set = this->executeQuery(
+                "SHOW VARIABLES LIKE 'max_allowed_packet'"
+            );
 
-        size_t row;
+            while( result_set->next() ){
+                return result_set->getUInt64( "Value" );
+            }
 
-        ResultSet result_set( statement->executeQuery( "SELECT * FROM my_table LIMIT 10" ) );
-
-        //cout << "result_set->rowsCount() = " << result_set->rowsCount() << endl;
-
-        row = 0;
-        while( result_set->next() ){
-            cout << "#\t\t Fetching row " << row << "\t";
-            cout << "id = " << result_set->getInt("id");
-            cout << ", title = '" << result_set->getString("title") << "'";
-            cout << ", slug = '" << result_set->getString("slug") << "'";
-            cout << endl;
-            row++;
-        }
+            return 4000000;
 
     }
 
@@ -115,8 +105,8 @@ namespace Altumo{
 
         if( asynchronous ){
 
-            while( number_of_workers >= 140 ){
-
+            while( number_of_workers >= 40 ){
+                usleep( 500 );
             }
 
             string *statement_string = new string( statement_str );
@@ -140,11 +130,6 @@ namespace Altumo{
                     }
                     this->statement->execute( statement_str );
 
-            }else{
-
-                //pthread_join( thread, NULL );
-                //this->statement_threads.push_back( &thread );
-
             }
 
         }else{
@@ -159,26 +144,8 @@ namespace Altumo{
     }
 
 
-    void Connector::waitForConnectionsToClose(){
-
-        /*
-        vector< pthread_t* >::iterator iterator;
-
-        for(
-            iterator = this->statement_threads.begin();
-            iterator < this->statement_threads.end();
-            iterator++
-        ){
-            pthread_join( **iterator, NULL );
-        }*/
-
-    }
-
-
     Connector::~Connector(){
 
-        //this->waitForConnectionsToClose();
-        //connected = false;
         this->disconnect();
 
     }
@@ -229,16 +196,20 @@ namespace Altumo{
     void *executeStatementThread( void *arg ){
 
         string *statement_str = ((string *) arg);
+        int temp_workers;
 
         pthread_mutex_lock( &number_of_workers_mutex );
             sql::Driver *driver = sql::mysql::get_driver_instance();
             driver->threadInit();
+            temp_workers = number_of_workers;
         pthread_mutex_unlock( &number_of_workers_mutex );
 
+                cout << temp_workers << " - ";
+                flush( cout );
 
                 Connector *connector = new Connector();
 
-                //sleep( 3 );
+                //usleep( 100000 );
 
                 connector->executeStatement( *statement_str, false );
 
@@ -247,11 +218,15 @@ namespace Altumo{
         pthread_mutex_lock( &number_of_workers_mutex );
             driver->threadEnd();
             number_of_workers--;
+            temp_workers = number_of_workers;
         pthread_mutex_unlock( &number_of_workers_mutex );
 
         delete statement_str;
         delete connector;
         //delete driver;
+
+        cout << temp_workers << " - ";
+        flush( cout );
 
         return NULL;
 

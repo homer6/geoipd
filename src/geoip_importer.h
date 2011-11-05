@@ -35,7 +35,8 @@
             protected:
                 string blocks_filename;
                 string locations_filename;
-                Connector *connector;
+                Connector *connector;                
+                unsigned long mysql_max_packet_size;
 
         };
 

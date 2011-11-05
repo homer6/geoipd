@@ -7,7 +7,6 @@
         #include <string>
         #include "mysql/driver/mysql_public_iface.h"
         #include <pthread.h>
-        #include <vector>
 
     //required by Test
         #include <stdlib.h>
@@ -35,15 +34,14 @@ namespace Altumo{
             void executeStatement( const string &statement_str, bool asynchronous = true );
             void connect();
             void disconnect();
-            void waitForConnectionsToClose();
             bool hasOpenConnections();
             int getNumberOfActiveConnections() const;
+            unsigned long readMaxPacketSize();
 
         protected:            
             bool connected;
             std::auto_ptr< sql::Statement > statement;
             std::auto_ptr< sql::Connection > connection;
-            //std::vector< pthread_t* > statement_threads;
 
     };
 
