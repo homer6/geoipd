@@ -32,3 +32,14 @@ WHERE
             inet_aton( "211.38.137.33" ) <= end_ip
     )
 ;
+
+
+
+
+
+SELECT country, region, city FROM geo_ip_location
+WHERE
+    id = ( SELECT location_id FROM geo_ip_block
+        WHERE 3542518049 BETWEEN start_ip AND end_ip
+    )
+;
