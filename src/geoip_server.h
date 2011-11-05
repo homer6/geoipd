@@ -28,6 +28,10 @@
                 ~GeoIpServer();
                 int setProgramOptions( int argc, char** argv );
                 void loadData();
+                Location *getLocationByIp( const string ip_address );
+                Location *getLocationByIp( unsigned long ip_address );
+
+                //static unsigned int getIpAddressFromString( string ip_address );
 
             protected:
                 void loadLocationsFile();
@@ -35,8 +39,8 @@
 
                 string blocks_filename;
                 string locations_filename;
-                map< unsigned long int, Location* > address_table;
-                map< int, Location* > locations_table;
+                map< unsigned long, Location* > *address_table; //ip address as int
+                map< unsigned long, Location* > *locations_table; //location id as int
 
         };
 

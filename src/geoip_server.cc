@@ -1,3 +1,7 @@
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "geoip_server.h"
 
 
@@ -75,6 +79,9 @@ namespace Altumo{
     */
     void GeoIpServer::loadData(){
 
+        this->address_table = new map< unsigned long, Location* >;
+        this->locations_table = new map< unsigned long, Location* >;
+
         this->loadLocationsFile();
         this->loadBlocksFile();
 
@@ -92,10 +99,11 @@ namespace Altumo{
         //declare and initialize local variables
             boost::cmatch result;
             string line;
+            unsigned long location_id;
 
         //import the locations section
             ifstream locations_file( this->locations_filename.c_str() );
-            const boost::regex locations_pattern( "(\\d+),\"(..)\",\"(..)\",\"(.*?)\",\"(.*?)\",(.*?),(.*?),(\\d*),(\\d*)" );
+            const boost::regex locations_pattern( "(\\d+),\"(..)\",\"(.*?)\",\"(.*?)\",\"(.*?)\",(.*?),(.*?),(\\d*),(\\d*)" );
             int number_of_imported_records = 0;
             int number_of_skipped_records = 0;
 
@@ -118,7 +126,14 @@ namespace Altumo{
                         result[9].str()
                     );
 
-                    locations_table[ std::atoi(result[1].str().c_str()) ] = new_location;
+                    location_id = std::strtoul( result[1].str().c_str(), NULL, 0 );
+                    if( location_id == ULONG_MAX ){
+                        cout << "Location line: " << line << " id is out of range. Skipping." << endl;
+                        number_of_skipped_records++;
+                        continue;
+                    }
+
+                    locations_table->insert( pair< unsigned long, Location* >( location_id, new_location ) );
 
                 }else{
 
@@ -149,7 +164,9 @@ namespace Altumo{
             int number_of_skipped_records = 0;
             boost::cmatch result;
             string line;
-            int location_id;
+            unsigned long location_id;
+            unsigned long ip_address;
+            map< unsigned long, Location* >::iterator iterator;
 
         //import the blocks section
             ifstream blocks_file( this->blocks_filename.c_str() );
@@ -163,9 +180,28 @@ namespace Altumo{
 
                     number_of_imported_records++;
 
-                    location_id = std::atoi( result[3].str().c_str() );
+                    location_id = std::strtoul( result[3].str().c_str(), NULL, 0 );
+                    if( location_id == ULONG_MAX ){
+                        cout << "Blocks line: " << line << " location_id is out of range. Skipping." << endl;
+                        number_of_skipped_records++;
+                        continue;
+                    }
 
-                    address_table[ std::atoi(result[1].str().c_str()) ] = (*(locations_table.find(location_id))).second;
+                    iterator = locations_table->find( location_id );
+                    if( iterator == locations_table->end() ){
+                        cout << "Blocks line: " << line << " location_id was not found in the location map. Skipping." << endl;
+                        number_of_skipped_records++;
+                        continue;
+                    }
+
+                    ip_address = std::strtoul( result[1].str().c_str(), NULL, 0 );
+                    if( ip_address == ULONG_MAX ){
+                        cout << "Blocks line: " << line << " ip_address is out of range. Skipping." << endl;
+                        number_of_skipped_records++;
+                        continue;
+                    }
+
+                    address_table->insert( pair< unsigned long, Location* >( ip_address, iterator->second ) );
 
                 }else{
 
@@ -181,6 +217,71 @@ namespace Altumo{
             blocks_file.close();
 
     }
+
+
+
+    /**
+    * Gets a location by IP.
+    *
+    * Returns NULL if not found.
+    *
+    */
+    Location *GeoIpServer::getLocationByIp( const string ip_address ){
+
+        //convert string to ip integer
+        unsigned long int_ip_address = inet_addr( ip_address.c_str() );
+
+        if( int_ip_address == INADDR_NONE || int_ip_address == INADDR_ANY ){
+            cout << "Not an IP address: " << int_ip_address << endl;
+            return NULL;
+        }
+
+        return this->getLocationByIp( int_ip_address );
+
+    }
+
+
+    /**
+    * Gets a location by IP.
+    *
+    * Returns NULL if not found.
+    *
+    */
+    Location *GeoIpServer::getLocationByIp( unsigned long ip_address ){
+
+        map< unsigned long, Location* >::iterator iterator;
+
+        iterator = address_table->upper_bound( ip_address );
+
+        if( iterator != address_table->end() ){
+
+            if( iterator == address_table->begin() ){
+                return NULL;
+            }else{
+                iterator--;
+                return iterator->second;
+            }
+
+        }else{
+
+            return NULL;
+
+        }
+
+
+    }
+
+
+
+    /*
+    static unsigned int GeoIpServer::getIpAddressFromString( string ip_address ){
+
+
+
+
+
+    }
+    */
 
 
 }
