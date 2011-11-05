@@ -76,7 +76,7 @@ namespace Altumo{
     void GeoIpServer::loadData(){
 
         this->loadLocationsFile();
-        //this->loadBlocksFile();
+        this->loadBlocksFile();
 
     }
 
@@ -92,8 +92,6 @@ namespace Altumo{
         //declare and initialize local variables
             boost::cmatch result;
             string line;
-            string metro_code;
-            string area_code;
 
         //import the locations section
             ifstream locations_file( this->locations_filename.c_str() );
@@ -146,20 +144,16 @@ namespace Altumo{
     */
     void GeoIpServer::loadBlocksFile(){
 
-        /*
         //declare and initialize local variables
-            string insert_query, blocks_insert_query;
-            bool first = true;
             int number_of_imported_records = 0;
             int number_of_skipped_records = 0;
             boost::cmatch result;
             string line;
+            int location_id;
 
         //import the blocks section
             ifstream blocks_file( this->blocks_filename.c_str() );
             const boost::regex blocks_pattern( "\"(\\d+)\",\"(\\d+)\",\"(\\d+)\"" );
-            blocks_insert_query = "INSERT INTO geo_ip_block( start_ip, end_ip, location_id ) VALUES ";
-            insert_query = blocks_insert_query;
 
             while( !blocks_file.eof() ){
 
@@ -169,24 +163,9 @@ namespace Altumo{
 
                     number_of_imported_records++;
 
-                    if( !first ){
-                        insert_query += ",";
-                    }else{
-                        first = false;
-                    }
-                    insert_query += " (" +
-                                  escapeString( result[1].str().c_str() ) +
-                                ", " +
-                                  escapeString( result[2].str().c_str() ) +
-                                ", " +
-                                  escapeString( result[3].str().c_str() ) +
-                                ")";
+                    location_id = std::atoi( result[3].str().c_str() );
 
-                    if( insert_query.length() > this->mysql_max_packet_size ){
-                        this->connector->executeStatement( insert_query );
-                        insert_query = blocks_insert_query;
-                        first = true;
-                    }
+                    address_table[ std::atoi(result[1].str().c_str()) ] = (*(locations_table.find(location_id))).second;
 
                 }else{
 
@@ -196,16 +175,10 @@ namespace Altumo{
 
             }
 
-            if( !first ){
-                this->connector->executeStatement( insert_query );
-            }
-
-            first = true;
             cout << endl << number_of_imported_records << " block records imported.";
             cout << endl << number_of_skipped_records << " block records skipped." << endl;
             flush( cout );
             blocks_file.close();
-            */
 
     }
 
