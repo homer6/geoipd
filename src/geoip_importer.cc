@@ -141,15 +141,18 @@ namespace Altumo{
         //declare and initialize local variables
             string insert_query, locations_insert_query;
             bool first = true;
-            int x = 0;
+            int number_of_imported_records = 0;
+            int number_of_skipped_records = 0;
             boost::cmatch result;
             string line;
             const size_t batch_size = 500;
+            string metro_code;
+            string area_code;
 
         //import the locations section
             ifstream locations_file( this->locations_filename.c_str() );
-            const boost::regex locations_pattern( "(\\d+),\"(..)\",\"(..)\",\"(.*?)\",\"(.*?)\",(.*?),(.*?),(\\d+),(\\d+)" );
-            x = 0;
+            const boost::regex locations_pattern( "(\\d+),\"(..)\",\"(..)\",\"(.*?)\",\"(.*?)\",(.*?),(.*?),(\\d*),(\\d*)" );
+            number_of_imported_records = 0;
             first = true;
             locations_insert_query = "INSERT INTO geo_ip_location( id, country, region, city, postal_code, latitude, longitude, metro_code, area_code ) VALUES ";
             insert_query = locations_insert_query;
@@ -157,14 +160,26 @@ namespace Altumo{
             while( !locations_file.eof() ){
 
                 getline( locations_file, line );
+
                 if( boost::regex_match(line.c_str(), result, locations_pattern) ){
 
-                    x++;
+                    number_of_imported_records++;
                     if( !first ){
                         insert_query += ",";
                     }else{
                         first = false;
                     }
+
+                    metro_code = escapeString( result[8].str().c_str() );
+                    if( metro_code.length() == 0 ){
+                        metro_code = "NULL";
+                    }
+
+                    area_code = escapeString( result[8].str().c_str() );
+                    if( area_code.length() == 0 ){
+                        area_code = "NULL";
+                    }
+
                     insert_query += " (" +
                                   escapeString( result[1].str().c_str() ) +
                                 ", \"" +
@@ -180,30 +195,32 @@ namespace Altumo{
                                 ", " +
                                   escapeString( result[7].str().c_str() ) +
                                 ", " +
-                                  escapeString( result[8].str().c_str() ) +
+                                  metro_code +
                                 ", " +
-                                  escapeString( result[9].str().c_str() ) +
+                                  area_code +
                                 ")";
 
-                    if( x % batch_size == 0 ){
+                    if( number_of_imported_records % batch_size == 0 ){
                         this->connector->executeStatement( insert_query );
                         insert_query = locations_insert_query;
                         first = true;
-                        //cout << ".";
-                        //flush( cout );
                     }
+                }else{
+
+                    number_of_skipped_records++;
+
                 }
 
             }
 
-            if( x % batch_size != 0 ){
+            if( number_of_imported_records % batch_size != 0 ){
                 this->connector->executeStatement( insert_query );
             }
-            insert_query = "";
+
             first = true;
-            //cout << ".";
+            cout << endl << number_of_imported_records << " locations records imported." << endl;
+            cout << endl << number_of_skipped_records << " locations records skipped." << endl;
             flush( cout );
-            cout << endl << x << " locations records imported." << endl;
             locations_file.close();
 
     }
@@ -220,7 +237,8 @@ namespace Altumo{
         //declare and initialize local variables
             string insert_query, blocks_insert_query;
             bool first = true;
-            int x = 0;
+            int number_of_imported_records = 0;
+            int number_of_skipped_records = 0;
             boost::cmatch result;
             string line;
             const size_t batch_size = 5000;
@@ -236,7 +254,8 @@ namespace Altumo{
                 getline( blocks_file, line, '\n' );
 
                 if( boost::regex_match(line.c_str(), result, blocks_pattern) ){
-                    x++;
+
+                    number_of_imported_records++;
 
                     if( !first ){
                         insert_query += ",";
@@ -251,33 +270,29 @@ namespace Altumo{
                                   escapeString( result[3].str().c_str() ) +
                                 ")";
 
-                    if( x % batch_size == 0 ){
+                    if( number_of_imported_records % batch_size == 0 ){
                         this->connector->executeStatement( insert_query );
                         insert_query = blocks_insert_query;
                         first = true;
-                        //cout << ".";
-                        //flush( cout );
                     }
 
-                }
+                }else{
 
-                if( x > 6200000 ){
-                    break;
+                    number_of_skipped_records++;
+
                 }
 
             }
 
-            if( x % batch_size != 0 ){
+            if( number_of_imported_records % batch_size != 0 ){
                 this->connector->executeStatement( insert_query );
-                //cout << ".";
             }
 
-            insert_query = "";
             first = true;
+            cout << endl << number_of_imported_records << " block records imported." << endl;
+            cout << endl << number_of_skipped_records << " block records skipped." << endl;
             flush( cout );
-            cout << endl << x << " block records imported." << endl;
             blocks_file.close();
-
 
     }
 
