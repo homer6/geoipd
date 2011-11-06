@@ -189,8 +189,8 @@ namespace Altumo{
                         this->connector->executeStatement( insert_query );
                         insert_query = locations_insert_query;
                         first = true;
-                        cout << ".";
-                        flush( cout );
+                        //cout << ".";
+                        //flush( cout );
                     }
                 }
 
@@ -223,7 +223,7 @@ namespace Altumo{
             int x = 0;
             boost::cmatch result;
             string line;
-            const size_t batch_size = 500;
+            const size_t batch_size = 5000;
 
         //import the blocks section
             ifstream blocks_file( this->blocks_filename.c_str() );
@@ -231,12 +231,13 @@ namespace Altumo{
             blocks_insert_query = "INSERT INTO geo_ip_block( start_ip, end_ip, location_id ) VALUES ";
             insert_query = blocks_insert_query;
 
-            while( getline(blocks_file, line, '\n') ){
+            while( !blocks_file.eof() ){
 
-                //if( boost::regex_match(line.c_str(), result, blocks_pattern) ){
+                getline( blocks_file, line, '\n' );
+
+                if( boost::regex_match(line.c_str(), result, blocks_pattern) ){
                     x++;
 
-                    /*
                     if( !first ){
                         insert_query += ",";
                     }else{
@@ -254,13 +255,13 @@ namespace Altumo{
                         this->connector->executeStatement( insert_query );
                         insert_query = blocks_insert_query;
                         first = true;
-                        cout << ". " << x;
-                        flush( cout );
-                    }*/
+                        //cout << ".";
+                        //flush( cout );
+                    }
 
-                //}
+                }
 
-                if( x > 2000000 ){
+                if( x > 6200000 ){
                     break;
                 }
 
@@ -268,11 +269,11 @@ namespace Altumo{
 
             if( x % batch_size != 0 ){
                 this->connector->executeStatement( insert_query );
+                //cout << ".";
             }
 
             insert_query = "";
             first = true;
-            cout << ".";
             flush( cout );
             cout << endl << x << " block records imported." << endl;
             blocks_file.close();

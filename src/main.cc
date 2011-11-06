@@ -87,10 +87,10 @@ int main( int argc, char** argv ){
 
     importer->clearExistingTables();
     importer->createNewTables();
-    //importer->importLocationsFile();
-    //while( !importer->readyToClose() ){
-    //    usleep( 300000 );
-    //}
+    importer->importLocationsFile();
+    while( !importer->readyToClose() ){
+        usleep( 300000 );
+    }
 
     importer->importBlocksFile();
     while( !importer->readyToClose() ){
