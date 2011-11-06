@@ -15,6 +15,8 @@ namespace Altumo{
     */
     GeoIpServer::GeoIpServer(){
 
+        this->address_table = new LocationMap;
+        this->locations_table = new LocationMap;
 
     }
 
@@ -25,6 +27,17 @@ namespace Altumo{
     */
     GeoIpServer::~GeoIpServer(){
 
+        //delete all of the locations
+            for(
+                LocationMap::iterator iterator = locations_table->begin();
+                iterator != locations_table->end();
+                iterator++
+            ){
+                delete iterator->second;
+            }
+
+        delete locations_table;
+        delete address_table;
 
     }
 
@@ -79,9 +92,6 @@ namespace Altumo{
     */
     void GeoIpServer::loadData(){
 
-        this->address_table = new map< unsigned long, Location* >;
-        this->locations_table = new map< unsigned long, Location* >;
-
         this->loadLocationsFile();
         this->loadBlocksFile();
 
@@ -133,7 +143,7 @@ namespace Altumo{
                         continue;
                     }
 
-                    locations_table->insert( pair< unsigned long, Location* >( location_id, new_location ) );
+                    locations_table->insert( LocationMapPair( location_id, new_location ) );
 
                 }else{
 
@@ -166,7 +176,7 @@ namespace Altumo{
             string line;
             unsigned long location_id;
             unsigned long ip_address;
-            map< unsigned long, Location* >::iterator iterator;
+            LocationMap::iterator iterator;
 
         //import the blocks section
             ifstream blocks_file( this->blocks_filename.c_str() );
@@ -201,7 +211,7 @@ namespace Altumo{
                         continue;
                     }
 
-                    address_table->insert( pair< unsigned long, Location* >( ip_address, iterator->second ) );
+                    address_table->insert( LocationMapPair( ip_address, iterator->second ) );
 
                 }else{
 
@@ -249,7 +259,7 @@ namespace Altumo{
     */
     Location *GeoIpServer::getLocationByIp( unsigned long ip_address ){
 
-        map< unsigned long, Location* >::iterator iterator;
+        LocationMap::iterator iterator;
 
         iterator = address_table->upper_bound( ip_address );
 

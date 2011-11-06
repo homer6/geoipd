@@ -128,7 +128,7 @@ IP: 17368064 - Kuala Lumpur, 14, MY
 
     vector< double >::iterator iterator;
     for( iterator = query_times.begin(); iterator < query_times.end(); iterator++ ){
-        cout << (*iterator) << endl;
+        //cout << (*iterator) << endl;
         sum_of_average_squared_deviation += (double) pow( (*iterator) - mean, 2 );
     }
 
@@ -143,9 +143,11 @@ IP: 17368064 - Kuala Lumpur, 14, MY
     cout << "Standard Deviation: " << standard_deviation << "s" << endl;
 
 
+    /*
     while( 1 ){
         sleep( 10 );
     }
+    */
     delete server;
 
     return 0;

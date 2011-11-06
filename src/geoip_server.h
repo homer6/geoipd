@@ -21,6 +21,9 @@
 
     namespace Altumo{
 
+        typedef map< unsigned long, Location* > LocationMap;
+        typedef pair< unsigned long, Location* > LocationMapPair;
+
         class GeoIpServer{
 
             public:
@@ -39,8 +42,8 @@
 
                 string blocks_filename;
                 string locations_filename;
-                map< unsigned long, Location* > *address_table; //ip address as int
-                map< unsigned long, Location* > *locations_table; //location id as int
+                LocationMap *address_table; //ip address as int
+                LocationMap *locations_table; //location id as int
 
         };
 
