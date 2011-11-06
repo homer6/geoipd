@@ -201,7 +201,7 @@ namespace Altumo{
             }
             insert_query = "";
             first = true;
-            cout << ".";
+            //cout << ".";
             flush( cout );
             cout << endl << x << " locations records imported." << endl;
             locations_file.close();
