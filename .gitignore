@@ -14,4 +14,5 @@ CPackConfig.cmake
 CPackSourceConfig.cmake
 geoipd
 src/geoipd.dir/
-
+geoip
+src/geoip.dir/
