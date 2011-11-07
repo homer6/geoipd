@@ -15,19 +15,7 @@ int main( int argc, char** argv ){
 
 
     server->loadData();
-
-    Location *location_result;
-
-    location_result = server->getLocationByIp( 1179572253UL );
-
-    if( location_result == NULL ){
-        cout << "Location not found." << endl;
-    }else{
-        cout << "-----------------------------" << endl;
-        cout << "City found: " << location_result->city << endl;
-        cout << "Region: " << location_result->region << endl;
-        cout << "Country: " << location_result->country << endl;
-    }
+    server->listenForConnections();
 
     delete server;
 

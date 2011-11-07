@@ -10,7 +10,9 @@
     #include <string>
     #include <stdlib.h>
     #include <map>
-
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
 
     #include <boost/program_options.hpp>
     #include <boost/regex.hpp>
@@ -33,6 +35,7 @@
                 void loadData();
                 Location *getLocationByIp( const string ip_address );
                 Location *getLocationByIp( unsigned long ip_address );
+                void listenForConnections();
 
                 //static unsigned int getIpAddressFromString( string ip_address );
 

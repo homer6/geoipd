@@ -1,7 +1,3 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "geoip_server.h"
 
 
@@ -278,6 +274,52 @@ namespace Altumo{
 
         }
 
+
+    }
+
+
+    /**
+    *
+    *
+    */
+    void GeoIpServer::listenForConnections(){
+
+        typedef struct sockaddr socket_address;
+
+        /* Following could be derived from SOMAXCONN in <sys/socket.h>, but many
+           kernels still #define it as 5, while actually supporting many more */
+        #define	LISTENQ		1024	/* 2nd argument to listen() */
+
+        /* Miscellaneous constants */
+        #define	MAXLINE		4096	/* max text line length */
+        #define	BUFFSIZE	8192	/* buffer size for reads and writes */
+
+
+        int					listenfd, connfd;
+        struct sockaddr_in	servaddr;
+        char				buff[ MAXLINE ];
+        time_t				ticks;
+
+        listenfd = socket(AF_INET, SOCK_STREAM, 0);
+
+        bzero(&servaddr, sizeof(servaddr));
+        servaddr.sin_family      = AF_INET;
+        servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+        servaddr.sin_port        = htons(3600);
+
+        bind(listenfd, (socket_address*) &servaddr, sizeof(servaddr));
+
+        listen( listenfd, LISTENQ );
+
+        for ( ; ; ) {
+            connfd = accept(listenfd, (socket_address*) NULL, NULL);
+
+            ticks = time(NULL);
+            snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks));
+            write(connfd, buff, strlen(buff));
+
+            close(connfd);
+        }
 
     }
 
