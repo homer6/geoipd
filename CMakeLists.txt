@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION "2.8.2")
-set(MAIN_EXECUTABLE geoipd)
 
-project(${MAIN_EXECUTABLE} CXX C)
+project(geoipd CXX C)
 add_subdirectory(src)
 
 # Set default compile flags for GCC

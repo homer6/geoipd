@@ -1,4 +1,4 @@
-#include "geoip_server.h"
+#include "../geoip_server.h"
 
 
 using namespace Altumo;
