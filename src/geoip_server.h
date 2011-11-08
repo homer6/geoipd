@@ -18,6 +18,7 @@
     #include <boost/regex.hpp>
 
     #include "location.h"
+    #include "common.h"
 
     using namespace std;
 

@@ -16,7 +16,7 @@ int main( int argc, char** argv ){
 
     string *location_result;
 
-    location_result = client->getLocationByIp( 1179572253U );
+    location_result = client->getLocationByIp();
 
     if( location_result == NULL ){
         cout << "Location not found." << endl;

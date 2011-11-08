@@ -295,10 +295,10 @@ namespace Altumo{
         #define	BUFFSIZE	8192	/* buffer size for reads and writes */
 
 
-        int					listenfd, connfd;
-        struct sockaddr_in	servaddr;
-        char				buff[ MAXLINE ];
-        time_t				ticks;
+        int listenfd, connfd;
+        struct sockaddr_in servaddr;
+        char recvline[ MAXLINE + 1 ];
+        char buff[ MAXLINE ];
 
         listenfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -311,14 +311,18 @@ namespace Altumo{
 
         listen( listenfd, LISTENQ );
 
+        int number_of_bytes_read;
         for ( ; ; ) {
-            connfd = accept(listenfd, (socket_address*) NULL, NULL);
 
-            ticks = time(NULL);
-            snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks));
-            write(connfd, buff, strlen(buff));
+            connfd = accept( listenfd, (socket_address*) NULL, NULL );
 
-            close(connfd);
+            number_of_bytes_read = read( connfd, recvline, 4 );
+            snprintf( buff, sizeof(buff), "%i character read.\r\n", number_of_bytes_read );
+            cout << "bytes read: " << number_of_bytes_read << " " << buff << endl;
+
+            writen( connfd, buff, strlen(buff) );
+            close( connfd );
+
         }
 
     }

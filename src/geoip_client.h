@@ -10,6 +10,7 @@
     #include <boost/program_options.hpp>
 
     #include "location.h"
+    #include "common.h"
 
     using namespace std;
 
@@ -21,10 +22,11 @@
                 GeoIpClient();
                 ~GeoIpClient();
                 int setProgramOptions( int argc, char** argv );
-                string *getLocationByIp( const string ip_address );
-                string *getLocationByIp( unsigned ip_address );
+                string *getLocationByIp();
 
             protected:
+                string *getLocationByIp( uint32_t ip_to_lookup );
+
                 string host;
                 string ip_address;
 

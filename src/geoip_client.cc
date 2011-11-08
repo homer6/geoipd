@@ -34,13 +34,11 @@ namespace Altumo{
             desc.add_options()
                 ( "help", "produce help message" )
                 ( "host", boost::program_options::value<string>(), "The IP address of the server to connect to." )
+                ( "ip-address", boost::program_options::value<string>(), "The IP address to look up." )
             ;
 
-            boost::program_options::positional_options_description position_arguments;
-            position_arguments.add( "ip-address", 1 );
-
             boost::program_options::variables_map variables_map;
-            boost::program_options::store( boost::program_options::parse_command_line(argc, argv, desc).positional(position_arguments).run(), variables_map );
+            boost::program_options::store( boost::program_options::parse_command_line(argc, argv, desc), variables_map );
             boost::program_options::notify( variables_map );
 
             if( variables_map.count("help") ){
@@ -81,12 +79,21 @@ namespace Altumo{
     * Returns NULL if not found.
     *
     */
-    string *GeoIpClient::getLocationByIp( const string ip_address ){
+    string *GeoIpClient::getLocationByIp(){
 
         //convert string to ip integer        
-        unsigned int_ip_address = 1234U;
+            struct sockaddr_in lookup_ip;
+            bzero( &lookup_ip, sizeof(lookup_ip) );
+            lookup_ip.sin_family = AF_INET;
+            lookup_ip.sin_port = htons( 3600 );
 
-        return this->getLocationByIp( int_ip_address );
+        if( inet_pton(AF_INET, this->ip_address.c_str(), &lookup_ip.sin_addr) <= 0 ){
+            cout << "Invalid IP to query: %s" << this->ip_address.c_str() << endl;
+            return NULL;
+        }
+        uint32_t query_address = ntohl( lookup_ip.sin_addr.s_addr );
+
+        return this->getLocationByIp( query_address );
 
     }
 
@@ -100,57 +107,72 @@ namespace Altumo{
     *
     *
     */
-    string *GeoIpClient::getLocationByIp( unsigned ip_address ){
+    string *GeoIpClient::getLocationByIp( uint32_t ip_to_lookup ){
 
-        typedef struct sockaddr socket_address;
+        //create a socket to connect with
+            typedef struct sockaddr socket_address;
 
-        /* Following could be derived from SOMAXCONN in <sys/socket.h>, but many
-           kernels still #define it as 5, while actually supporting many more */
-        #define	LISTENQ		1024	/* 2nd argument to listen() */
+            /* Following could be derived from SOMAXCONN in <sys/socket.h>, but many
+               kernels still #define it as 5, while actually supporting many more */
+            #define	LISTENQ		1024	/* 2nd argument to listen() */
 
-        /* Miscellaneous constants */
-        #define	MAXLINE		4096	/* max text line length */
-        #define	BUFFSIZE	8192	/* buffer size for reads and writes */
+            /* Miscellaneous constants */
+            #define	MAXLINE		4096	/* max text line length */
+            #define	BUFFSIZE	8192	/* buffer size for reads and writes */
 
-        ip_address = ip_address;
+            int sockfd, number_of_bytes_read;
+            char recvline[MAXLINE + 1];
 
-        int					sockfd, n;
-        char				recvline[MAXLINE + 1];
-        struct sockaddr_in	servaddr;
-
-        if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-            cout << "socket error";
-            return NULL;
-        }
-
-        bzero( &servaddr, sizeof(servaddr) );
-        servaddr.sin_family = AF_INET;
-        servaddr.sin_port   = htons( 3600 );	/* daytime server */
-        if( inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0 ){
-            cout << "inet_pton error for %s", argv[1] << endl;
-            return NULL;
-        }
+            if( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ){
+                cout << "socket error";
+                return NULL;
+            }
 
 
-        if( connect(sockfd, (socket_address*) &servaddr, sizeof(servaddr)) < 0 ){
-            cout << "connect error" << endl;
-            return NULL;
-        }
+        //convert server address from string to ip
+            struct sockaddr_in servaddr;
+            bzero( &servaddr, sizeof(servaddr) );
+            servaddr.sin_family = AF_INET;
+            servaddr.sin_port = htons( 3600 );
+            if( inet_pton(AF_INET, this->host.c_str(), &servaddr.sin_addr) <= 0 ){
+                cout << "Invalid server IP: %s" << this->host.c_str() << endl;
+                return NULL;
+            }
+
+        //connect
+            if( connect(sockfd, (socket_address*) &servaddr, sizeof(servaddr)) < 0 ){
+                cout << "Could not connect to server." << endl;
+                return NULL;
+            }
+
+         //make query
+            uint32_t network_ip_to_lookup = htonl( ip_to_lookup );
+            char query_message[4];
+            memcpy( &query_message, &network_ip_to_lookup, strlen(query_message) );
+            //snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks));
+            writen( sockfd, query_message, strlen(query_message) );
 
 
-        while( (n = read(sockfd, recvline, MAXLINE)) > 0 ){
-            recvline[n] = 0;	/* null terminate */
+
+         //read the response
+            //number_of_bytes_read = read( sockfd, recvline, MAXLINE );
+            number_of_bytes_read = 0;
+            cout << "okay" << endl;
+            //recvline[number_of_bytes_read] = 0;
             if( fputs(recvline, stdout) == EOF ){
                 cout << "fputs error" << endl;
                 return NULL;
             }
 
-        }
-        if( n < 0 ){
-            cout << "Read Error" << endl;
-        }
+            if( number_of_bytes_read < 0 ){
+                cout << "Read Error" << endl;
+            }else{
+                cout << number_of_bytes_read << " bytes read:" << endl;
+                cout << recvline << endl;
+            }
 
-        string *response = new string( recvline );
+        //create new string to hold the response
+            string *response = new string( recvline );
 
         return response;
 
