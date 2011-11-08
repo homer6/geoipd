@@ -234,15 +234,15 @@ namespace Altumo{
     */
     Location *GeoIpServer::getLocationByIp( const string ip_address ){
 
-        //convert string to ip integer
-        unsigned long int_ip_address = inet_addr( ip_address.c_str() );
+        //convert the IP address string to an integer
+            struct sockaddr_in sa;
+            int result = inet_pton( AF_INET, ip_address.c_str(), &(sa.sin_addr) );
 
-        if( int_ip_address == INADDR_NONE || int_ip_address == INADDR_ANY ){
-            cout << "Not an IP address: " << int_ip_address << endl;
+        if( result == 1 ){
+            return this->getLocationByIp( ntohl(sa.sin_addr.s_addr) );
+        }else{
             return NULL;
         }
-
-        return this->getLocationByIp( int_ip_address );
 
     }
 
@@ -284,60 +284,78 @@ namespace Altumo{
     */
     void GeoIpServer::listenForConnections(){
 
-        typedef struct sockaddr socket_address;
+        boost::asio::io_service io_service;
+        short port = 3600;
 
-        /* Following could be derived from SOMAXCONN in <sys/socket.h>, but many
-           kernels still #define it as 5, while actually supporting many more */
-        #define	LISTENQ		1024	/* 2nd argument to listen() */
-
-        /* Miscellaneous constants */
-        #define	MAXLINE		4096	/* max text line length */
-        #define	BUFFSIZE	8192	/* buffer size for reads and writes */
-
-
-        int listenfd, connfd;
-        struct sockaddr_in servaddr;
-        char recvline[ MAXLINE + 1 ];
-        char buff[ MAXLINE ];
-
-        listenfd = socket(AF_INET, SOCK_STREAM, 0);
-
-        bzero(&servaddr, sizeof(servaddr));
-        servaddr.sin_family      = AF_INET;
-        servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        servaddr.sin_port        = htons(3600);
-
-        bind(listenfd, (socket_address*) &servaddr, sizeof(servaddr));
-
-        listen( listenfd, LISTENQ );
-
-        int number_of_bytes_read;
-        for ( ; ; ) {
-
-            connfd = accept( listenfd, (socket_address*) NULL, NULL );
-
-            number_of_bytes_read = read( connfd, recvline, 4 );
-            snprintf( buff, sizeof(buff), "%i character read.\r\n", number_of_bytes_read );
-            cout << "bytes read: " << number_of_bytes_read << " " << buff << endl;
-
-            writen( connfd, buff, strlen(buff) );
-            close( connfd );
-
+        tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), port));
+        for( ;; ){
+            socket_ptr sock(new tcp::socket(io_service));
+            a.accept(*sock);
+            boost::thread thread( boost::bind(&GeoIpServer::handleSession, this ,sock) );
         }
 
     }
 
 
+    void GeoIpServer::handleSession( socket_ptr sock ){
 
-    /*
-    static unsigned int GeoIpServer::getIpAddressFromString( string ip_address ){
+        string *request;
+        Location *location;
+        string *response;
 
+        try{
 
+            for (;;){
+                char data[max_length];
 
+                boost::system::error_code error;
+                size_t length = sock->read_some( boost::asio::buffer(data), error );
+                if( error == boost::asio::error::eof ){
+                    break; // Connection closed cleanly by peer.
+                }else if( error ){
+                    throw boost::system::system_error( error ); // Some other error.
+                }
 
+                request = new string( data, length );
+
+                location = this->getLocationByIp( *request );
+
+                if( location == NULL ){
+                    response = new string( "{}" );
+                }else{
+                    stringstream response_stream;
+                    response_stream << "{"
+                                 << "\"city\":\"" << location->city << "\","
+                                 << "\"region\":\"" << location->region << "\","
+                                 << "\"country\":\"" << location->country << "\","
+                                 << "\"latitude\":\"" << location->latitude << "\","
+                                 << "\"longitude\":\"" << location->longitude << "\","
+                                 << "\"area_code\":\"" << location->area_code << "\","
+                                 << "\"metro_code\":\"" << location->metro_code << "\","
+                                 << "\"postal_code\":\"" << location->postal_code << "\""
+                              << "}";
+                    response = new string( response_stream.str() );
+                }
+
+                memset( data, 0, max_length );
+                strncpy( data, response->c_str(), response->length() );
+
+                boost::asio::write( *sock, boost::asio::buffer(data, max_length) );
+
+                delete request;
+                delete response;
+
+                //DO NOT DELETE THE LOCATION
+
+            }
+
+        }catch( std::exception& e ){
+
+            std::cerr << "Exception in thread: " << e.what() << "\n";
+
+        }
 
     }
-    */
 
 
 }

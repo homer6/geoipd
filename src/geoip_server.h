@@ -7,25 +7,32 @@
     #include <stdio.h>
     #include <iostream>
     #include <fstream>
+    #include <sstream>
     #include <string>
     #include <stdlib.h>
     #include <map>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
+    #include <cstdlib>
 
     #include <boost/program_options.hpp>
     #include <boost/regex.hpp>
+    #include <boost/bind.hpp>
+    #include <boost/smart_ptr.hpp>
+    #include <boost/asio.hpp>
+    #include <boost/thread.hpp>
 
     #include "location.h"
-    #include "common.h"
+
 
     using namespace std;
+    using boost::asio::ip::tcp;
 
     namespace Altumo{
 
         typedef map< unsigned long, Location* > LocationMap;
         typedef pair< unsigned long, Location* > LocationMapPair;
+
+        const int max_length = 1024;
+        typedef boost::shared_ptr<tcp::socket> socket_ptr;
 
         class GeoIpServer{
 
@@ -43,6 +50,7 @@
             protected:
                 void loadLocationsFile();
                 void loadBlocksFile();
+                void handleSession( socket_ptr sock );
 
                 string blocks_filename;
                 string locations_filename;
@@ -50,6 +58,9 @@
                 LocationMap *locations_table; //location id as int
 
         };
+
+
+
 
     }
 

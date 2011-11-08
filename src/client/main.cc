@@ -19,12 +19,12 @@ int main( int argc, char** argv ){
     location_result = client->getLocationByIp();
 
     if( location_result == NULL ){
-        cout << "Location not found." << endl;
+        cout << "{}" << endl;
     }else{
-        cout << location_result << endl;
+        cout << *location_result << endl;
+        delete location_result;
     }
 
-    delete location_result;
     delete client;
 
     return 0;

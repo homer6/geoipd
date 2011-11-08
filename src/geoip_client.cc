@@ -81,101 +81,35 @@ namespace Altumo{
     */
     string *GeoIpClient::getLocationByIp(){
 
-        //convert string to ip integer        
-            struct sockaddr_in lookup_ip;
-            bzero( &lookup_ip, sizeof(lookup_ip) );
-            lookup_ip.sin_family = AF_INET;
-            lookup_ip.sin_port = htons( 3600 );
+        try{
 
-        if( inet_pton(AF_INET, this->ip_address.c_str(), &lookup_ip.sin_addr) <= 0 ){
-            cout << "Invalid IP to query: %s" << this->ip_address.c_str() << endl;
-            return NULL;
+            boost::asio::io_service io_service;
+
+            tcp::resolver resolver( io_service );
+            tcp::resolver::query query( tcp::v4(), this->host.c_str(), "3600" );
+            tcp::resolver::iterator iterator = resolver.resolve( query );
+
+            tcp::socket s( io_service );
+            s.connect( *iterator );
+
+            size_t request_length = this->ip_address.size();
+            boost::asio::write( s, boost::asio::buffer(this->ip_address.c_str(), request_length) );
+
+            //get the header
+                char data[max_length];
+                boost::asio::read( s, boost::asio::buffer(data, max_length) );
+
+            string *response = new string( data );
+
+            return response;
+
+        }catch( std::exception& e ){
+
+           std::cerr << "Exception: " << e.what() << "\n";
+
         }
-        uint32_t query_address = ntohl( lookup_ip.sin_addr.s_addr );
 
-        return this->getLocationByIp( query_address );
-
-    }
-
-
-    /**
-    * Gets a location by IP.
-    *
-    * Returns NULL if not found.
-    *
-    * You must delete the string that is returned after use.
-    *
-    *
-    */
-    string *GeoIpClient::getLocationByIp( uint32_t ip_to_lookup ){
-
-        //create a socket to connect with
-            typedef struct sockaddr socket_address;
-
-            /* Following could be derived from SOMAXCONN in <sys/socket.h>, but many
-               kernels still #define it as 5, while actually supporting many more */
-            #define	LISTENQ		1024	/* 2nd argument to listen() */
-
-            /* Miscellaneous constants */
-            #define	MAXLINE		4096	/* max text line length */
-            #define	BUFFSIZE	8192	/* buffer size for reads and writes */
-
-            int sockfd, number_of_bytes_read;
-            char recvline[MAXLINE + 1];
-
-            if( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 ){
-                cout << "socket error";
-                return NULL;
-            }
-
-
-        //convert server address from string to ip
-            struct sockaddr_in servaddr;
-            bzero( &servaddr, sizeof(servaddr) );
-            servaddr.sin_family = AF_INET;
-            servaddr.sin_port = htons( 3600 );
-            if( inet_pton(AF_INET, this->host.c_str(), &servaddr.sin_addr) <= 0 ){
-                cout << "Invalid server IP: %s" << this->host.c_str() << endl;
-                return NULL;
-            }
-
-        //connect
-            if( connect(sockfd, (socket_address*) &servaddr, sizeof(servaddr)) < 0 ){
-                cout << "Could not connect to server." << endl;
-                return NULL;
-            }
-
-         //make query
-            uint32_t network_ip_to_lookup = htonl( ip_to_lookup );
-            char query_message[4];
-            memcpy( &query_message, &network_ip_to_lookup, strlen(query_message) );
-            //snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks));
-            writen( sockfd, query_message, strlen(query_message) );
-
-
-
-         //read the response
-            //number_of_bytes_read = read( sockfd, recvline, MAXLINE );
-            number_of_bytes_read = 0;
-            cout << "okay" << endl;
-            //recvline[number_of_bytes_read] = 0;
-            if( fputs(recvline, stdout) == EOF ){
-                cout << "fputs error" << endl;
-                return NULL;
-            }
-
-            if( number_of_bytes_read < 0 ){
-                cout << "Read Error" << endl;
-            }else{
-                cout << number_of_bytes_read << " bytes read:" << endl;
-                cout << recvline << endl;
-            }
-
-        //create new string to hold the response
-            string *response = new string( recvline );
-
-        return response;
-
+        return NULL;
 
     }
 
