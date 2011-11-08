@@ -105,7 +105,8 @@ namespace Altumo{
 
         }catch( std::exception& e ){
 
-           std::cerr << "Exception: " << e.what() << "\n";
+            string *response = new string( "{\"error\":\"" + string(e.what()) + "\"}" );
+            return response;
 
         }
 
