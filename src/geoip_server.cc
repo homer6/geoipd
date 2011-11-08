@@ -287,10 +287,12 @@ namespace Altumo{
         boost::asio::io_service io_service;
         short port = 3600;
 
-        tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), port));
+        tcp::endpoint localhost( boost::asio::ip::address::from_string("127.0.0.1"), port );
+
+        tcp::acceptor acceptor( io_service, localhost );
         for( ;; ){
             socket_ptr sock(new tcp::socket(io_service));
-            a.accept(*sock);
+            acceptor.accept(*sock);
             boost::thread thread( boost::bind(&GeoIpServer::handleSession, this ,sock) );
         }
 

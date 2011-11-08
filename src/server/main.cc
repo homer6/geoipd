@@ -1,5 +1,5 @@
 #include "../geoip_server.h"
-
+#include <stdlib.h>
 
 using namespace Altumo;
 using namespace std;
@@ -13,9 +13,16 @@ int main( int argc, char** argv ){
         return error_number;
     }
 
-
+    cout << "Loading the server. This may take a minute." << endl;
     server->loadData();
+    cout << "Ready." << endl;
+
+    //start the service
+    if( daemon(0,0) == -1 ){
+        err( 1, NULL );
+    }
     server->listenForConnections();
+
 
     delete server;
 
