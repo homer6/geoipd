@@ -25,21 +25,21 @@ Installation
 Usage
 -----
 Starting the server (the server will only listen locally):
-./geoipd --locations-file=GeoIPCity-134-Location.csv --blocks-file=GeoIPCity-134-Blocks.csv
+  ./geoipd --locations-file=GeoIPCity-134-Location.csv --blocks-file=GeoIPCity-134-Blocks.csv
 
 Running the client, once the server is running:
-./geoip --host=localhost --ip-address=206.87.31.18
-{"city":"Kelowna","region":"BC","country":"CA","latitude":"49.9000","longitude":"-119.4833","area_code":"","metro_code":"","postal_code":""}
+  ./geoip --host=localhost --ip-address=206.87.31.18
+  {"city":"Kelowna","region":"BC","country":"CA","latitude":"49.9000","longitude":"-119.4833","area_code":"","metro_code":"","postal_code":""}
 
 
 Possible Results
 ----------------
 Normal Result (only country is guaranteed):
-{"city":"Kelowna","region":"BC","country":"CA","latitude":"49.9000","longitude":"-119.4833","area_code":"","metro_code":"","postal_code":""}
+  {"city":"Kelowna","region":"BC","country":"CA","latitude":"49.9000","longitude":"-119.4833","area_code":"","metro_code":"","postal_code":""}
 
 No result found:
-{}
+  {}
 
 Error (if the server is down):
-{"error":"Connection Refused"}
+  {"error":"Connection Refused"}
 
