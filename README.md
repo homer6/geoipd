@@ -16,12 +16,12 @@ Dependencies
 Installation
 ------------
 
-  - git clone https://github.com/homer6/some-repository.git
-  - cd some-repository
+  - git clone git://github.com/homer6/geoipd.git
+  - cd geoipd
   - cmake .
   - make
 
-
+  
 Usage
 -----
 Starting the server (the server will only listen locally):
