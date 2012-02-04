@@ -1,5 +1,10 @@
 #include "geoip_server.h"
 
+#include <vector>
+#include <sys/time.h>
+#include <math.h>
+
+
 using namespace std;
 
 namespace Altumo{
@@ -12,6 +17,9 @@ namespace Altumo{
 
         this->address_table = new LocationMap;
         this->locations_table = new LocationMap;
+
+        this->cities_table = new std::list< City* >;
+        this->cities_index = new SearchTrie< City >;
 
     }
 
@@ -33,6 +41,8 @@ namespace Altumo{
 
         delete locations_table;
         delete address_table;
+        delete cities_index;
+        delete cities_table;
 
     }
 
@@ -51,6 +61,7 @@ namespace Altumo{
                 ( "help", "produce help message" )
                 ( "locations-file", boost::program_options::value<string>(), "The locations csv eg. GeoIPCity-134-Location.csv" )
                 ( "blocks-file", boost::program_options::value<string>(), "The blocks csv eg. GeoIPCity-134-Blocks.csv" )
+                ( "cities-file", boost::program_options::value<string>(), "The cities csv eg. worldcitiespop.txt" )
             ;
 
             boost::program_options::variables_map variables_map;
@@ -62,6 +73,7 @@ namespace Altumo{
                 return 1;
             }
 
+            /*
             if( variables_map.count("locations-file") ){
                 this->locations_filename = variables_map["locations-file"].as<string>();
             }else{
@@ -77,6 +89,15 @@ namespace Altumo{
                 cout << desc << "\n";
                 return 1;
             }
+            */
+
+            if( variables_map.count("cities-file") ){
+                this->cities_filename = variables_map["cities-file"].as<string>();
+            }else{
+                cout << "The cities file is required.\n";
+                cout << desc << "\n";
+                return 1;
+            }
 
             return 0;
 
@@ -89,8 +110,80 @@ namespace Altumo{
     */
     void GeoIpServer::loadData(){
 
-        this->loadLocationsFile();
-        this->loadBlocksFile();
+        //this->loadLocationsFile();
+        //this->loadBlocksFile();
+        this->loadCitiesFile();
+
+    }
+
+
+
+
+    /**
+    * Loads the GeoIPCity-134-Location.csv file, provided by MaxMind,
+    * to memory.
+    *
+    */
+    void GeoIpServer::loadCitiesFile(){
+
+        //declare and initialize local variables
+            boost::cmatch result;
+            string line;
+
+        //import the cities section
+            //ifstream locations_file( this->locations_filename.c_str() );
+            ifstream cities_file( "worldcitiespop.txt" );
+            const boost::regex cities_pattern( "(..),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)" );
+            int number_of_imported_records = 0;
+            int number_of_skipped_records = 0;
+
+            while( !cities_file.eof() ){
+
+                if( number_of_imported_records >= 100000 ){
+                    break;
+                }
+
+                getline( cities_file, line );
+
+                if( boost::regex_match(line.c_str(), result, cities_pattern) ){
+
+                    number_of_imported_records++;
+
+                    City *new_city = new City(
+                        result[1].str(),
+                        result[3].str()
+                    );
+
+                    /*
+                    location_id = std::strtoul( result[1].str().c_str(), NULL, 0 );
+                    if( location_id == ULONG_MAX ){
+                        cout << "Location line: " << line << " id is out of range. Skipping." << endl;
+                        number_of_skipped_records++;
+                        continue;
+                    }
+                    */
+
+                    //cities_table->insert( new_city );
+                    cities_index->addWord( result[2].str(), new_city );
+                    //locations_table->insert( LocationMapPair( location_id, new_location ) );
+
+                }else{
+
+                    number_of_skipped_records++;
+
+                }
+
+            }
+
+            cities_index->debug();
+
+            cout << endl << number_of_imported_records << " city records imported.";
+            cout << endl << number_of_skipped_records << " city records skipped." << endl;
+            flush( cout );
+            cities_file.close();
+
+            this->benchmarkSearchTrie();
+            while( 1 );
 
     }
 
@@ -222,6 +315,7 @@ namespace Altumo{
             cout << endl << number_of_skipped_records << " block records skipped." << endl;
             flush( cout );
             blocks_file.close();
+
 
     }
 
@@ -357,6 +451,68 @@ namespace Altumo{
             std::cerr << "Exception in thread: " << e.what() << "\n";
 
         }
+
+    }
+
+
+
+    void GeoIpServer::benchmarkSearchTrie(){
+
+
+        srand( time(NULL) );
+        timeval time_start, time_stop, time_difference;
+        double query_time_in_seconds;
+        double total_query_times = 0.0;
+        vector< double > query_times;
+
+            int x = 0;
+            std::list< City* >* results;
+
+            for( ; x < 5000000; x++ ){
+
+                gettimeofday( &time_start, NULL );
+
+                    results = new std::list< City* >;
+                    this->cities_index->search( std::string("andor"), results );
+                    delete results;
+
+                gettimeofday( &time_stop, NULL );
+
+                timersub( &time_stop, &time_start, &time_difference );
+                query_time_in_seconds = time_difference.tv_sec + time_difference.tv_usec/1000000.0;
+
+                query_times.push_back( query_time_in_seconds );
+                total_query_times += query_time_in_seconds;
+
+            }
+
+            cout.precision(12);
+
+            double mean = total_query_times / x;
+            double sum_of_average_squared_deviation = 0.0;
+
+            vector< double >::iterator iterator;
+            for( iterator = query_times.begin(); iterator < query_times.end(); iterator++ ){
+                //cout << (*iterator) << endl;
+                sum_of_average_squared_deviation += (double) pow( (*iterator) - mean, 2 );
+            }
+
+            double variance = sum_of_average_squared_deviation / (double)query_times.size();
+            double standard_deviation = (double) sqrt( variance );
+
+            cout << "For " << x << " queries:" << endl;
+
+            cout << "Sum: " << total_query_times << "s" << endl;
+            cout << "Mean: " << mean << "s" << endl;
+            cout << "Variance: " << variance << "s" << endl;
+            cout << "Standard Deviation: " << standard_deviation << "s" << endl;
+
+
+        //search_trie.debug();
+
+        cout << "size of SearchTrie< City >: " << sizeof( SearchTrie< City > ) << endl;
+        cout << "size of SearchTrieNode< City >: " << sizeof( SearchTrieNode< City > ) << endl;
+
 
     }
 

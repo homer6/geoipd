@@ -33,6 +33,7 @@
                 void addStub( const std::string &stub, storage_type* target );
                 SearchTrieNode< storage_type > root;
                 size_t size;
+                size_t num_targets;
 
         };
 
@@ -41,7 +42,7 @@
         *
         */
         template<typename storage_type>
-        SearchTrie< storage_type >::SearchTrie() : size(0) {
+        SearchTrie< storage_type >::SearchTrie() : size(0), num_targets(0) {
 
         }
 
@@ -68,8 +69,7 @@
             std::string stub;
 
             for( x = 0; x < size; x++ ){
-                stub = word_lowercase.substr( x, size - x );
-                cout << stub << endl;
+                stub = word_lowercase.substr( x, size - x );                
                 this->addStub( stub, target );
             }
 
@@ -127,36 +127,29 @@
 
                 ++x;
 
-                SearchTrieNodePointer new_node = new SearchTrieNode< storage_type >;
-                SearchTrieNodePointer result_node = current_node->addChild( *iterator, new_node );
+                SearchTrieNodePointer child = current_node->findChild( *iterator );
 
-                /*
-                if( new_node->id == 16 ){
-                    cout << "16 - x:" << x << "stub_count:" << stub_count << endl;
-                }
-                */
-
-                //if new node was added, increase the size
-                if( result_node == new_node ){
+                //if not found, add it
+                if( child == NULL ){
+                    SearchTrieNodePointer new_node = new SearchTrieNode< storage_type >;
+                    current_node->addChild( *iterator, new_node );
                     this->size++;
+                    current_node = new_node;
                 }else{
-                    delete new_node;
+                    current_node = child;
                 }
 
-                current_node = result_node;
 
                 //add the target to the last letter's node (unless the target already exists in the descendents)
-                    std::list< storage_type* >* list = new std::list< storage_type* >;
-                    current_node->getAllDescendentTargets( list );
-                    typename std::list< storage_type* >::iterator list_iterator;
-                    list_iterator = std::find( list->begin(), list->end(), target );
+                    if( x == stub_count ){
 
-                    if( x == stub_count && list_iterator == list->end() ){
-                        current_node->addTarget( target );
+                        if( !current_node->isInDescendents(target) ){
+                            current_node->addTarget( target );
+                            this->num_targets++;
+                        }
+
                     }
-                    delete list;
 
-                //cout << x << " dsfas " << stub_count << ": " << current_node->id << " " << *iterator << " " << *target << endl;
 
             }
 
@@ -175,13 +168,14 @@
         template<typename storage_type>
         void SearchTrie< storage_type >::debug(){
 
-            typename SearchTrie< storage_type >::SearchTrieNodePointer current_node = this->getRoot();
+            //typename SearchTrie< storage_type >::SearchTrieNodePointer current_node = this->getRoot();
 
             std::cout << "Size: " << this->size << endl;
+            std::cout << "Targets: " << this->num_targets << endl;
 
-            std::cout << "root: " << endl;
+            //std::cout << "root: " << endl;
 
-            current_node->debug();
+            //current_node->debug();
 
             std::cout << endl;
 

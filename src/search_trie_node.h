@@ -26,7 +26,7 @@
                 SearchTrieNode();
                 ~SearchTrieNode();
 
-                SearchTrieNodePointer addChild( char letter, const SearchTrieNodePointer new_child );
+                void addChild( char letter, const SearchTrieNodePointer new_child );
                 SearchTrieNodePointer findChild( char letter );
                 bool hasChildren() const;
 
@@ -34,6 +34,7 @@
                 void removeTarget( storage_type* target );
                 std::list< storage_type* > getTargets() const;
                 void getAllDescendentTargets( std::list<storage_type*> *list );
+                bool isInDescendents( storage_type* target );
                 bool hasTargets() const;
 
                 void debug();
@@ -96,18 +97,10 @@
         *
         */
         template<typename storage_type>
-        typename SearchTrieNode< storage_type >::SearchTrieNodePointer SearchTrieNode<storage_type>::addChild( char letter, const SearchTrieNodePointer new_child ){
+        void SearchTrieNode<storage_type>::addChild( char letter, const SearchTrieNodePointer new_child ){
 
-            SearchTrieNodePointer child = this->findChild( letter );
-
-            //if not found, add it
-            if( child == NULL ){
-                typename std::pair<char, SearchTrieNodePointer> entry(letter, new_child);
-                this->children.insert( entry );
-                return new_child;
-            }else{
-                return child;
-            }
+            typename std::pair<char, SearchTrieNodePointer> entry(letter, new_child);
+            this->children.insert( entry );
 
         }
 
@@ -157,6 +150,37 @@
             }
 
         }
+
+
+        /*
+        * Determines if the provided target is in any of the decendents.
+        *
+        */
+        template<typename storage_type>
+        bool SearchTrieNode< storage_type >::isInDescendents( storage_type* target ){
+
+            typename std::list< storage_type* >::iterator list_iterator;
+            list_iterator = std::find( this->targets.begin(), this->targets.end(), target );
+            if( list_iterator != this->targets.end() ){
+                return true;
+            }
+
+            SearchTrieNodePointer child;
+            typename std::map< char, SearchTrieNodePointer >::iterator child_iterator;
+
+            for( child_iterator = this->children.begin(); child_iterator != this->children.end(); child_iterator++ ){
+
+                child = child_iterator->second;
+                if( child->isInDescendents( target ) ){
+                    return true;
+                }
+
+            }
+
+            return false;
+
+        }
+
 
 
         template<typename storage_type>

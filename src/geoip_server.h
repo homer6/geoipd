@@ -12,6 +12,7 @@
     #include <stdlib.h>
     #include <map>
     #include <cstdlib>
+    #include <list>
 
     #include <boost/program_options.hpp>
     #include <boost/regex.hpp>
@@ -21,6 +22,8 @@
     #include <boost/thread.hpp>
 
     #include "location.h"
+    #include "city.h"
+    #include "search_trie.h"
 
 
     using namespace std;
@@ -45,17 +48,25 @@
                 Location *getLocationByIp( unsigned long ip_address );
                 void listenForConnections();
 
+                void benchmarkSearchTrie();
+
                 //static unsigned int getIpAddressFromString( string ip_address );
 
             protected:
+                void loadCitiesFile();
                 void loadLocationsFile();
-                void loadBlocksFile();
+                void loadBlocksFile();                                
                 void handleSession( socket_ptr sock );
 
+                string cities_filename;
                 string blocks_filename;
                 string locations_filename;
+
+                std::list< City* > *cities_table; //a list of all cities for searching
                 LocationMap *address_table; //ip address as int
                 LocationMap *locations_table; //location id as int
+                SearchTrie< City > *cities_index; //full text index of city names
+
 
         };
 
