@@ -33,6 +33,7 @@
                 void addTarget( storage_type* new_target );
                 void removeTarget( storage_type* target );
                 std::list< storage_type* > getTargets() const;
+                void getAllDescendentTargets( std::list<storage_type*> *list );
                 bool hasTargets() const;
 
                 void debug();
@@ -91,7 +92,7 @@
 
         /*
         * Adds a single child, by the letter.
-        * Return true if the child was added.
+        * Returns the new_child pointer, if it was added. Else, it returns a pointer to the existing node.
         *
         */
         template<typename storage_type>
@@ -134,6 +135,30 @@
 
         }
 
+
+        /*
+        * Gets all of the targets in this node and all of its descendents and inserts them into the provided list.
+        *
+        */
+        template<typename storage_type>
+        void SearchTrieNode< storage_type >::getAllDescendentTargets( std::list< storage_type* > *list ){
+
+            std::list< storage_type* > copy( this->targets );
+            list->merge( copy );
+
+            SearchTrieNodePointer child;
+            typename std::map< char, SearchTrieNodePointer >::iterator child_iterator;
+
+            for( child_iterator = this->children.begin(); child_iterator != this->children.end(); child_iterator++ ){
+
+                child = child_iterator->second;
+                child->getAllDescendentTargets( list );
+
+            }
+
+        }
+
+
         template<typename storage_type>
         bool SearchTrieNode< storage_type >::hasTargets() const{
 
@@ -156,22 +181,26 @@
             typename std::map< char, SearchTrieNodePointer >::iterator child_iterator;
             typename std::list< storage_type* >::iterator target_iterator;
 
+            SearchTrieNodePointer child;
+
             for( child_iterator = this->children.begin(); child_iterator != this->children.end(); child_iterator++ ){
 
+                child = child_iterator->second;
+
                 //display id, letter and parent_id
-                    cout << endl << "node_id: " << child_iterator->second->id << "( " << child_iterator->first << " )" << ", parent: " << this->id;
+                    cout << endl << "node_id: " << child->id << "( " << child_iterator->first << " )" << ", parent: " << this->id;
 
                 //display targets
-                    if( this->hasTargets() ){
+                    if( child->hasTargets() ){
                         cout << ", targets( " ;
-                        for( target_iterator = this->targets.begin(); target_iterator != this->targets.end(); target_iterator++ ){
+                        for( target_iterator = child->targets.begin(); target_iterator != child->targets.end(); target_iterator++ ){
                             cout << **target_iterator << ", " ;
                         }
                         cout << ")";
                     }
 
                 //display all of the children's debug info
-                    child_iterator->second->debug();
+                    child->debug();
 
             }
 
