@@ -8,18 +8,18 @@
 
             public:
                 City(
-                    std::string country_code_var,
+                    //std::string country_code_var,
                     std::string name_var
-                ): country_code(country_code_var), name(name_var){
+                ): name(name_var){
 
                 }
 
-                std::string country_code;
+                //std::string country_code;
                 std::string name;  //latin 1
-                std::string region_code;
-                unsigned population;
-                float latitude;
-                float longitude;
+                //std::string region_code;
+                //unsigned population;
+                //float latitude;
+                //float longitude;
 
                 bool operator==( const City &other ) const {
                     return true;

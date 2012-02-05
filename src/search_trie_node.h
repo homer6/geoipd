@@ -19,7 +19,7 @@
         class SearchTrieNode{
 
             public:
-                static unsigned next_id;
+                //static unsigned next_id;
 
                 typedef SearchTrieNode< storage_type >* SearchTrieNodePointer;
 
@@ -39,7 +39,7 @@
 
                 void debug();
 
-                unsigned id;
+                //unsigned id;
 
             protected:
                 std::map< char, SearchTrieNodePointer > children;
@@ -47,15 +47,15 @@
 
         };
 
-        template <typename storage_type>
-        unsigned SearchTrieNode< storage_type >::next_id = 0;
+        //template <typename storage_type>
+        //unsigned SearchTrieNode< storage_type >::next_id = 0;
 
 
         /**
         *
         */
         template<typename storage_type>
-        SearchTrieNode< storage_type >::SearchTrieNode() : id(++next_id){
+        SearchTrieNode< storage_type >::SearchTrieNode(){
 
         }
 
@@ -212,7 +212,7 @@
                 child = child_iterator->second;
 
                 //display id, letter and parent_id
-                    cout << endl << "node_id: " << child->id << "( " << child_iterator->first << " )" << ", parent: " << this->id;
+                    //cout << endl << "node_id: " << child->id << "( " << child_iterator->first << " )" << ", parent: " << this->id;
 
                 //display targets
                     if( child->hasTargets() ){
