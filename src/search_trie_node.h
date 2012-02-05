@@ -5,6 +5,8 @@
     //#include <string>
     #include <map>
     #include <list>
+    #include <forward_list>
+
     //#include <boost/regex.hpp>
 
     //#include "location.h"
@@ -32,8 +34,8 @@
 
                 void addTarget( storage_type* new_target );
                 void removeTarget( storage_type* target );
-                std::list< storage_type* > getTargets() const;
-                void getAllDescendentTargets( std::list<storage_type*> *list );
+                std::forward_list< storage_type* > getTargets() const;
+                void getAllDescendentTargets( std::forward_list<storage_type*> *list );
                 bool isInDescendents( storage_type* target );
                 bool hasTargets() const;
 
@@ -43,7 +45,7 @@
 
             protected:
                 std::map< char, SearchTrieNodePointer > children;
-                std::list< storage_type* > targets;
+                std::forward_list< storage_type* > targets;
 
         };
 
@@ -108,7 +110,7 @@
         template<typename storage_type>
         void SearchTrieNode< storage_type >::addTarget( storage_type* new_target ){
 
-            this->targets.push_back( new_target );
+            this->targets.push_front( new_target );
 
         }
 
@@ -122,7 +124,7 @@
 
 
         template<typename storage_type>
-        std::list< storage_type* > SearchTrieNode< storage_type >::getTargets() const{
+        std::forward_list< storage_type* > SearchTrieNode< storage_type >::getTargets() const{
 
             return this->targets;
 
@@ -134,9 +136,9 @@
         *
         */
         template<typename storage_type>
-        void SearchTrieNode< storage_type >::getAllDescendentTargets( std::list< storage_type* > *list ){
+        void SearchTrieNode< storage_type >::getAllDescendentTargets( std::forward_list< storage_type* > *list ){
 
-            std::list< storage_type* > copy( this->targets );
+            std::forward_list< storage_type* > copy( this->targets );
             list->merge( copy );
 
             SearchTrieNodePointer child;
@@ -159,7 +161,7 @@
         template<typename storage_type>
         bool SearchTrieNode< storage_type >::isInDescendents( storage_type* target ){
 
-            typename std::list< storage_type* >::iterator list_iterator;
+            typename std::forward_list< storage_type* >::iterator list_iterator;
             list_iterator = std::find( this->targets.begin(), this->targets.end(), target );
             if( list_iterator != this->targets.end() ){
                 return true;
@@ -203,7 +205,7 @@
         void SearchTrieNode< storage_type >::debug(){
 
             typename std::map< char, SearchTrieNodePointer >::iterator child_iterator;
-            typename std::list< storage_type* >::iterator target_iterator;
+            typename std::forward_list< storage_type* >::iterator target_iterator;
 
             SearchTrieNodePointer child;
 

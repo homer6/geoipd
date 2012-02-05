@@ -62,7 +62,7 @@
                 string blocks_filename;
                 string locations_filename;
 
-                std::list< City* > *cities_table; //a list of all cities for searching
+                std::forward_list< City* > *cities_table; //a list of all cities for searching
                 LocationMap *address_table; //ip address as int
                 LocationMap *locations_table; //location id as int
                 SearchTrie< City > *cities_index; //full text index of city names

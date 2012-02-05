@@ -4,7 +4,7 @@
 #include <set>
 #include <sys/time.h>
 #include <math.h>
-
+#include <forward_list>
 
 using namespace std;
 
@@ -19,7 +19,7 @@ namespace Altumo{
         this->address_table = new LocationMap;
         this->locations_table = new LocationMap;
 
-        this->cities_table = new std::list< City* >;
+        this->cities_table = new std::forward_list< City* >;
         this->cities_index = new SearchTrie< City >;
 
     }
@@ -141,9 +141,9 @@ namespace Altumo{
 
             while( !cities_file.eof() ){
 
-                if( number_of_imported_records >= 10000 ){
-                    break;
-                }
+                //if( number_of_imported_records >= 100000 ){
+                //    break;
+                // }
 
                 getline( cities_file, line );
 
@@ -468,13 +468,13 @@ namespace Altumo{
         vector< double > query_times;
 
             int x = 0;
-            std::list< City* >* results;
+            std::forward_list< City* >* results;
 
             for( ; x < 5000000; x++ ){
 
                 gettimeofday( &time_start, NULL );
 
-                    results = new std::list< City* >;
+                    results = new std::forward_list< City* >;
                     this->cities_index->search( std::string("andor"), results );
                     delete results;
 
@@ -516,6 +516,7 @@ namespace Altumo{
         cout << "size of SearchTrieNode< City >: " << sizeof( SearchTrieNode< City > ) << endl;
         cout << "size of std::map< char, City >: " << sizeof( std::map< char, City > ) << endl;
         cout << "size of std::list< SearchTrieNode<City>::SearchTrieNodePointer >: " << sizeof( std::list< SearchTrieNode<City>::SearchTrieNodePointer > ) << endl;
+        cout << "size of std::forward_list< SearchTrieNode<City>::SearchTrieNodePointer >: " << sizeof( std::forward_list< SearchTrieNode<City>::SearchTrieNodePointer > ) << endl;
         cout << "size of std::vector< SearchTrieNode<City>::SearchTrieNodePointer >: " << sizeof( std::vector< SearchTrieNode<City>::SearchTrieNodePointer > ) << endl;
         cout << "size of std::vector< char >: " << sizeof( std::vector<char> ) << endl;
         cout << "size of std::set< SearchTrieNode<City>::SearchTrieNodePointer >: " << sizeof( std::set< SearchTrieNode<City>::SearchTrieNodePointer > ) << endl;

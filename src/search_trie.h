@@ -5,6 +5,7 @@
     #include <algorithm>
     #include <string>
     #include <iostream>
+    #include <forward_list>
     //#include <boost/regex.hpp>
 
     #include "search_trie_node.h"
@@ -24,7 +25,7 @@
                 ~SearchTrie();
 
                 void addWord( const std::string &word, storage_type* target );
-                void search( const std::string &query, std::list< storage_type* >* results );
+                void search( const std::string &query, std::forward_list< storage_type* >* results );
 
                 SearchTrieNodePointer getRoot();
                 void debug();
@@ -64,15 +65,14 @@
             std::string word_lowercase = word;
             std::transform( word_lowercase.begin(), word_lowercase.end(), word_lowercase.begin(), ::tolower );
 
-            unsigned size = word_lowercase.size();
-            unsigned x;
-            std::string stub;
+            //unsigned size = word_lowercase.size();
+            //unsigned x;
+            //std::string stub;
 
-            for( x = 0; x < size; x++ ){
-                stub = word_lowercase.substr( x, size - x );                
-                this->addStub( stub, target );
-            }
-
+            //for( x = 0; x < size; x++ ){
+            //    stub = word_lowercase.substr( x, size - x );
+                this->addStub( word_lowercase, target );
+            //}
         }
 
 
@@ -81,7 +81,7 @@
         *
         */
         template<typename storage_type>
-        void SearchTrie< storage_type >::search( const std::string &query, std::list< storage_type* >* results ){
+        void SearchTrie< storage_type >::search( const std::string &query, std::forward_list< storage_type* >* results ){
 
             std::string word_lowercase = query;
             std::transform( word_lowercase.begin(), word_lowercase.end(), word_lowercase.begin(), ::tolower );

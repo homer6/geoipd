@@ -11,5 +11,5 @@ target_link_libraries( ../geoip ${Boost_LIBRARIES} )
 # Set default compile flags for GCC
 if(CMAKE_COMPILER_IS_GNUCXX)
   message(STATUS "GCC detected, adding compile flags")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O2")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -O3 -std=c++0x")
 endif(CMAKE_COMPILER_IS_GNUCXX)
