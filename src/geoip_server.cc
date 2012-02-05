@@ -1,6 +1,5 @@
 #include "geoip_server.h"
 
-
 using namespace std;
 
 namespace Altumo{
@@ -43,6 +42,8 @@ namespace Altumo{
     *
     */
     int GeoIpServer::setProgramOptions( int argc, char** argv ){
+
+
 
         //handle the command line arguments
             boost::program_options::options_description desc("Options");
