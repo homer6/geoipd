@@ -22,6 +22,8 @@ namespace Altumo{
         this->cities_table = new std::forward_list< City* >;
         this->cities_index = new SearchTrie< City >;
 
+        this->countries = new CountryMap;
+
     }
 
 
@@ -40,10 +42,11 @@ namespace Altumo{
                 delete iterator->second;
             }
 
-        delete locations_table;
-        delete address_table;
-        delete cities_index;
-        delete cities_table;
+        delete this->locations_table;
+        delete this->address_table;
+        delete this->cities_index;
+        delete this->cities_table;
+        delete this->countries;
 
     }
 
@@ -63,6 +66,7 @@ namespace Altumo{
                 ( "locations-file", boost::program_options::value<string>(), "The locations csv eg. GeoIPCity-134-Location.csv" )
                 ( "blocks-file", boost::program_options::value<string>(), "The blocks csv eg. GeoIPCity-134-Blocks.csv" )
                 ( "cities-file", boost::program_options::value<string>(), "The cities csv eg. worldcitiespop.txt" )
+                ( "states-file", boost::program_options::value<string>(), "The states csv eg. states.txt" )
             ;
 
             boost::program_options::variables_map variables_map;
@@ -102,6 +106,15 @@ namespace Altumo{
                 return 1;
             }
 
+
+            if( variables_map.count("states-file") ){
+                this->states_filename = variables_map["states-file"].as<string>();
+            }else{
+                cout << "The states file is required.\n";
+                cout << desc << "\n";
+                return 1;
+            }
+
             return 0;
 
     }
@@ -113,21 +126,24 @@ namespace Altumo{
     */
     void GeoIpServer::loadData(){
 
+        this->loadStatesFile();
+        //this->loadCitiesFile();
+
         //this->loadLocationsFile();
         //this->loadBlocksFile();
-        this->loadCitiesFile();
+
+
+
+
 
     }
 
 
-
-
     /**
-    * Loads the GeoIPCity-134-Location.csv file, provided by MaxMind,
-    * to memory.
+    * Loads an augmented version of http://www.maxmind.com/app/fips10_4 to memory.
     *
     */
-    void GeoIpServer::loadCitiesFile(){
+    void GeoIpServer::loadStatesFile(){
 
         //declare and initialize local variables
             boost::cmatch result;
@@ -186,6 +202,65 @@ namespace Altumo{
 
             this->benchmarkSearchTrie();
             while( 1 );
+
+    }
+
+
+
+    /**
+    * Loads the GeoIPCity-134-Location.csv file, provided by MaxMind,
+    * to memory.
+    *
+    */
+    void GeoIpServer::loadCitiesFile(){
+
+        //declare and initialize local variables
+            boost::cmatch result;
+            string line;
+
+        //import the cities section
+            ifstream cities_file( this->cities_filename.c_str() );
+            const boost::regex cities_pattern( "(..),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)" );
+            int number_of_imported_records = 0;
+            int number_of_skipped_records = 0;
+
+            while( !cities_file.eof() ){
+
+                //if( number_of_imported_records >= 100000 ){
+                //    break;
+                // }
+
+                getline( cities_file, line );
+
+                if( boost::regex_match(line.c_str(), result, cities_pattern) ){
+
+                    number_of_imported_records++;
+
+                    City *new_city = new City(
+                        //result[1].str(),
+                        result[3].str()
+                    );
+
+                    //cities_table->insert( new_city );
+                    cities_index->addWord( result[2].str(), new_city );
+
+                }else{
+
+                    number_of_skipped_records++;
+
+                }
+
+            }
+
+            cities_index->debug();
+
+            cout << endl << number_of_imported_records << " city records imported.";
+            cout << endl << number_of_skipped_records << " city records skipped." << endl;
+            flush( cout );
+            cities_file.close();
+
+            //this->benchmarkSearchTrie();
+            //while( 1 );
 
     }
 

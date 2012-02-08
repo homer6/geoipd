@@ -24,15 +24,13 @@
     #include "location.h"
     #include "city.h"
     #include "search_trie.h"
+    #include "country.h"
 
 
     using namespace std;
     using boost::asio::ip::tcp;
 
     namespace Altumo{
-
-        typedef map< unsigned long, Location* > LocationMap;
-        typedef pair< unsigned long, Location* > LocationMapPair;
 
         const int max_length = 1024;
         typedef boost::shared_ptr<tcp::socket> socket_ptr;
@@ -53,20 +51,24 @@
                 //static unsigned int getIpAddressFromString( string ip_address );
 
             protected:
+                void loadStatesFile();
                 void loadCitiesFile();
                 void loadLocationsFile();
-                void loadBlocksFile();                                
+                void loadBlocksFile();
                 void handleSession( socket_ptr sock );
 
+                string states_filename;
                 string cities_filename;
                 string blocks_filename;
                 string locations_filename;
 
-                std::forward_list< City* > *cities_table; //a list of all cities for searching
                 LocationMap *address_table; //ip address as int
                 LocationMap *locations_table; //location id as int
+
+                std::forward_list< City* > *cities_table; //a list of all cities for searching
                 SearchTrie< City > *cities_index; //full text index of city names
 
+                CountryMap *countries; //map of all countries (which have states)
 
         };
 

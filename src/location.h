@@ -16,6 +16,9 @@
 
 namespace Altumo{
 
+    typedef map< unsigned long, Location* > LocationMap;
+    typedef pair< unsigned long, Location* > LocationMapPair;
+
     class Location{
 
         public:
